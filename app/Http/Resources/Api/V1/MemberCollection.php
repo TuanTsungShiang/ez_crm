@@ -7,6 +7,16 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class MemberCollection extends ResourceCollection
 {
+    public function withResponse($request, $response)
+    {
+        $response->setEncodingOptions(JSON_UNESCAPED_UNICODE);
+    }
+
+    public function paginationInformation($request, $paginated, $default): array
+    {
+        return [];
+    }
+
     /**
      * Transform the resource collection into an array.
      *
