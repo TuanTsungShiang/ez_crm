@@ -170,6 +170,78 @@ class MemberSearchTest extends TestCase
 
     // ---- 輔助：建立測試資料 ----
 
+    public function test_filter_by_tag_ids_requires_members_to_match_all_tags(): void
+    {
+        $tagA = Tag::create(['name' => 'TagA', 'color' => '#111111']);
+        $tagB = Tag::create(['name' => 'TagB', 'color' => '#222222']);
+
+        $memberWithAllTags = Member::create([
+            'uuid'     => Str::uuid(),
+            'name'     => 'All Tags',
+            'email'    => 'all-tags@example.com',
+            'password' => bcrypt('password'),
+            'status'   => 1,
+        ]);
+
+        $memberWithPartialTags = Member::create([
+            'uuid'     => Str::uuid(),
+            'name'     => 'Partial Tags',
+            'email'    => 'partial-tags@example.com',
+            'password' => bcrypt('password'),
+            'status'   => 1,
+        ]);
+
+        $memberWithAllTags->tags()->attach([$tagA->id, $tagB->id]);
+        $memberWithPartialTags->tags()->attach([$tagA->id]);
+
+        $response = $this->getJson($this->endpoint.'?'.http_build_query([
+            'tag_ids'  => [$tagA->id, $tagB->id],
+            'per_page' => 15,
+        ]));
+
+        $response->assertStatus(200);
+        $this->assertEquals(1, $response->json('data.pagination.total'));
+        $this->assertEquals($memberWithAllTags->id, $response->json('data.items.0.id'));
+    }
+
+    public function test_filter_by_tag_ids_ignores_duplicate_values(): void
+    {
+        $tagA = Tag::create(['name' => 'DupTagA', 'color' => '#333333']);
+        $tagB = Tag::create(['name' => 'DupTagB', 'color' => '#444444']);
+
+        $member = Member::create([
+            'uuid'     => Str::uuid(),
+            'name'     => 'Duplicate Tag Match',
+            'email'    => 'duplicate-tag-match@example.com',
+            'password' => bcrypt('password'),
+            'status'   => 1,
+        ]);
+
+        $member->tags()->attach([$tagA->id, $tagB->id]);
+
+        $uniqueResponse = $this->getJson($this->endpoint.'?'.http_build_query([
+            'tag_ids'  => [$tagA->id, $tagB->id],
+            'per_page' => 15,
+        ]));
+
+        $duplicateResponse = $this->getJson($this->endpoint.'?'.http_build_query([
+            'tag_ids'  => [$tagA->id, $tagA->id, $tagB->id],
+            'per_page' => 15,
+        ]));
+
+        $uniqueResponse->assertStatus(200);
+        $duplicateResponse->assertStatus(200);
+
+        $this->assertEquals(
+            $uniqueResponse->json('data.pagination.total'),
+            $duplicateResponse->json('data.pagination.total')
+        );
+        $this->assertEquals(
+            $uniqueResponse->json('data.items.0.id'),
+            $duplicateResponse->json('data.items.0.id')
+        );
+    }
+
     private function seedBaseData(): void
     {
         $group = MemberGroup::create(['name' => '一般會員', 'sort_order' => 1]);
