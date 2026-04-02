@@ -7,6 +7,7 @@ use App\Models\MemberGroup;
 use App\Models\MemberProfile;
 use App\Models\MemberSns;
 use App\Models\Tag;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -20,10 +21,20 @@ class MemberSearchTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->actingAs(User::factory()->create());
         $this->seedBaseData();
     }
 
     // ---- 基本結構 ----
+
+    public function test_requires_authentication(): void
+    {
+        $this->app['auth']->forgetGuards();
+
+        $response = $this->getJson($this->endpoint);
+
+        $response->assertStatus(401);
+    }
 
     public function test_returns_success_response_structure(): void
     {
