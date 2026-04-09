@@ -22,5 +22,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
-        Route::get('members/search', [MemberController::class, 'search']);
+        Route::get('members', [MemberController::class, 'search']);
     });

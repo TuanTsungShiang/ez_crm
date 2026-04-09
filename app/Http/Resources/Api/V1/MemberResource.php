@@ -15,7 +15,6 @@ class MemberResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'            => $this->id,
             'uuid'          => $this->uuid,
             'name'          => $this->name,
             'nickname'      => $this->nickname,
@@ -23,12 +22,10 @@ class MemberResource extends JsonResource
             'phone'         => $this->phone,
             'status'        => $this->status,
             'group'         => $this->whenLoaded('group', fn() => [
-                'id'   => $this->group?->id,
                 'name' => $this->group?->name,
             ]),
             'tags'          => $this->whenLoaded('tags', fn() =>
                 $this->tags->map(fn($tag) => [
-                    'id'    => $tag->id,
                     'name'  => $tag->name,
                     'color' => $tag->color,
                 ])

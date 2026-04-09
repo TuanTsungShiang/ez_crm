@@ -16,7 +16,7 @@ class MemberSearchTest extends TestCase
 {
     use RefreshDatabase;
 
-    private string $endpoint = '/api/v1/members/search';
+    private string $endpoint = '/api/v1/members';
 
     protected function setUp(): void
     {
@@ -44,7 +44,7 @@ class MemberSearchTest extends TestCase
                  ->assertJsonStructure([
                      'success',
                      'data' => [
-                         'items' => [['id', 'uuid', 'name', 'email', 'status', 'group', 'tags', 'has_sns', 'created_at']],
+                         'items' => [['uuid', 'name', 'email', 'status', 'group', 'tags', 'has_sns', 'created_at']],
                          'pagination' => ['total', 'per_page', 'current_page', 'last_page'],
                      ],
                  ])
@@ -201,7 +201,7 @@ class MemberSearchTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertEquals(1, $response->json('data.pagination.total'));
-        $this->assertEquals($memberWithAllTags->id, $response->json('data.items.0.id'));
+        $this->assertEquals($memberWithAllTags->uuid, $response->json('data.items.0.uuid'));
     }
 
     public function test_filter_by_tag_ids_ignores_duplicate_values(): void
@@ -237,8 +237,8 @@ class MemberSearchTest extends TestCase
             $duplicateResponse->json('data.pagination.total')
         );
         $this->assertEquals(
-            $uniqueResponse->json('data.items.0.id'),
-            $duplicateResponse->json('data.items.0.id')
+            $uniqueResponse->json('data.items.0.uuid'),
+            $duplicateResponse->json('data.items.0.uuid')
         );
     }
 
