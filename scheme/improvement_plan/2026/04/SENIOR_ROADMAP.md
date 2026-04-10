@@ -669,35 +669,314 @@ ez_crm/
 
 ---
 
-## 七、職涯路線總覽（含 Phase 5/6）
+## 七、Phase 7：Game-test 整合 = 多前台 PoC（衝刺商品化的關鍵）
+
+### 為什麼這個 Phase 是「商品化衝刺」的關鍵
+
+之前的 Phase 1-6 證明的是「ez_crm 內部能跑」。  
+**Phase 7 證明的是「ez_crm 能被外部前台使用」**——這才是真正的 API-first 設計驗證。
+
+業界對「商品化」的定義不是「功能多」，是「能被多個 client 共用」。Phase 7 用 Game-test 驗證這件事。
+
+### 7.1 為什麼 Game-test 是完美的測試前台
+
+**Game-test 現況**（位於 `c:/xampp/htdocs/Game-test/`）：
+
+```
+5 個獨立純前端小遊戲：
+  ├── type_master         打字訓練（已有 css/js/data 三層結構化拆分）
+  ├── dino_run_v2         恐龍跑酷
+  ├── doodle_jump_v3      塗鴉跳跳
+  ├── tetris_v1           俄羅斯方塊
+  └── mbti-test-full      MBTI 測驗
+
+技術特徵：
+  ✓ vanilla HTML/CSS/JS（無框架負擔）
+  ✓ WebAudio API 音效（進階 JS 證據）
+  ✓ 完全沒有後端 / 會員 / 認證邏輯
+  ✓ 100% kevin 自寫
+```
+
+**為什麼這是完美測試標的：**
+
+1. **5 個遊戲 = 5 種完全不同的分數結構**
+   - type_master → WPM、accuracy、duration
+   - dino_run → distance、duration
+   - doodle_jump → height、duration
+   - tetris → score、lines、level
+   - mbti → result type（不是分數，是 enum）
+   
+   **這 5 種結構會強迫 ez_crm 的 schema 必須夠 generic 才能 cover**——這正是真實 SaaS 平台會遇到的設計題。
+
+2. **5 個獨立遊戲 = 5 個獨立的會員中心 use case**
+   - 登入 → 拿 token
+   - 玩遊戲 → 寫紀錄
+   - 看歷史
+   - 看排行榜
+   - 跨遊戲累積會員資料
+
+3. **純前端 = 最容易接 RESTful API**（不用學 React/Vue）
+
+### 7.2 整合架構（會員中心 + 多前台入口）
+
+```
+                    ez_crm（會員中心 + API）
+                  ┌──────────────────────┐
+                  │ POST /api/v1/auth/login    │
+                  │ GET  /api/v1/me            │
+                  │ POST /api/v1/scores         │
+                  │ GET  /api/v1/scores/history │
+                  │ GET  /api/v1/scores/leaders │
+                  │ GET  /api/v1/games          │
+                  └──────────────────────┘
+                          ▲
+        ┌─────────────────┼─────────────────┐
+        │                 │                 │
+        ▼                 ▼                 ▼
+   Game-test        Game-test-v2       未來前台 N
+   (5 個遊戲)       (改外觀/branding)  (LIFF/商城/etc)
+   
+   每個遊戲都會：
+     1. 用 token 驗證身份
+     2. 完成後寫分數
+     3. 顯示個人歷史
+     4. 看排行榜
+```
+
+### 7.3 整合路線（6-8 週）
+
+#### Phase A: 建立共用 shell（1-2 週）
+
+```
+ez_crm 端：
+  ✓ POST /api/v1/auth/login（已有 Sanctum）
+  ✓ GET  /api/v1/me
+  ✓ 設定 CORS 允許 Game-test 域名
+
+Game-test 端：
+  ├── shell/login.html         登入頁
+  ├── shell/game-hub.html      遊戲列表 + 顯示會員資料 + nav
+  ├── js/auth.js               token 管理 + fetch wrapper
+  └── css/shell.css            共用外殼樣式
+```
+
+**關鍵設計決策：**
+
+> **A 路 vs B 路**
+>
+> A 路：把 Game-test 整個吃進 ez_crm（變成 ez_crm 的 public/ 子目錄）  
+>   → 簡單，不用處理 CORS  
+>   → 但**違背「會員中心 + 多前台」的本意**
+>
+> B 路：Game-test 保持獨立 repo，跨域呼叫 ez_crm API  
+>   → 真實的多前台架構  
+>   → 要處理 CORS、token、CSRF
+>
+> **選 B 路。** 你要驗證的就是「多前台入口」，A 路會讓你騙過自己。
+> CORS / token 這些坑就是你要踩的，踩過就會了。
+
+#### Phase B: type_master 第一個 end-to-end 整合（1 週）
+
+選 type_master 做第一個，因為它已經有 `css/js/data` 三層結構化拆分，最容易接管。
+
+```
+任務：
+  1. 加入登入要求（未登入 → redirect to shell/login.html）
+  2. 開始遊戲時記錄 session_id
+  3. 結束時 POST /api/v1/scores
+     payload: {
+       game: "type_master",
+       data: { wpm, accuracy, duration, chars_typed }
+     }
+  4. 顯示個人歷史（GET /api/v1/scores/history?game=type_master）
+  5. 顯示排行榜（GET /api/v1/scores/leaders?game=type_master）
+
+驗證點：
+  ✓ token 跨域傳遞正常
+  ✓ Sanctum stateful 認證在跨域下能用
+  ✓ ez_crm 的 score schema 能存 type_master 的數據
+```
+
+#### Phase C: 其他 4 個遊戲套用同樣 pattern（2-3 週）
+
+每個遊戲 2-3 天：
+
+| 遊戲 | 分數結構 | 設計挑戰 |
+|------|---------|---------|
+| dino_run | `{distance, duration}` | 距離型分數 |
+| doodle_jump | `{height, duration}` | 高度型分數 |
+| tetris | `{score, lines, level}` | 多維度分數 |
+| mbti-test | `{result_type, answers}` | 不是分數，是 enum 結果 |
+
+**這 4 個遊戲跑通後，你的 `scores` table 就證明能 cover：**
+- 數值型（distance, height, score, wpm）
+- 計數型（lines, chars_typed）
+- 分級型（level, accuracy）
+- 列舉型（mbti result）
+- 時間型（duration）
+
+**這個 schema 設計能力是 Senior 級的真實證明。**
+
+#### Phase D: 第二前台 PoC（1 週）
+
+```
+任務：
+  1. 複製 Game-test → Game-test-v2
+  2. 換 branding（不同 logo / 配色 / 名稱）
+  3. 用「同一個 ez_crm 帳號」在兩個前台登入
+  4. 證明：
+     - Session 跨前台共用
+     - 分數累積到同一個 member
+     - 排行榜跨前台合併
+     
+驗證：「會員中心 + 多前台」架構真的成立
+```
+
+### 7.4 schema 設計範例
+
+這是你做 Phase 7 時必須先想清楚的核心 schema：
+
+```sql
+-- games 表（遊戲註冊表）
+CREATE TABLE games (
+  id           BIGINT PK,
+  slug         VARCHAR(50) UNIQUE,    -- 'type_master', 'dino_run' ...
+  name         VARCHAR(100),
+  schema_def   JSON,                   -- 該遊戲的分數欄位定義
+  created_at, updated_at
+);
+
+-- scores 表（用 JSON 欄位 cover 任意分數結構）
+CREATE TABLE scores (
+  id           BIGINT PK,
+  member_id    BIGINT FK,
+  game_id      BIGINT FK,
+  score_data   JSON,                   -- {wpm: 80, accuracy: 95.5, ...}
+  primary_score INT,                   -- 用於排行榜的單一數值（從 score_data 抽出來）
+  played_at    TIMESTAMP,
+  
+  INDEX (game_id, primary_score DESC),  -- 排行榜
+  INDEX (member_id, played_at DESC)     -- 個人歷史
+);
+```
+
+**為什麼這個設計是 Senior 級：**
+
+- 用 JSON 欄位處理「不知道未來會有什麼遊戲」的彈性
+- 用 `primary_score` 整數欄位處理「排行榜需要快速排序」的效能
+- 用 `schema_def` 在 games 表記錄「該遊戲的分數欄位有哪些」，支援 generic UI 渲染
+- 對 mbti 這種「沒有 score 只有 result」的特例：`primary_score = NULL`，靠 `score_data.result_type` 走
+
+### 7.5 Phase 7 的面試武器
+
+**故事：「我如何用 Game-test 驗證 ez_crm 的多前台架構」**
+
+> 「我做 ez_crm 的時候不滿足於『內部能跑』，我想驗證『能被外部前台使用』。
+> 
+> 我有一個獨立的 repo 叫 Game-test，裡面有 5 個我自己寫的純前端小遊戲。
+> 我用這 5 個遊戲當測試前台，把 ez_crm 改成 API-first 設計。
+> 
+> 5 個遊戲的分數結構完全不同：
+>   - type_master 是 WPM + accuracy
+>   - dino_run 是 distance
+>   - tetris 是 score + lines + level
+>   - mbti-test 根本不是分數，是 enum result
+> 
+> 這逼我把 ez_crm 的 scores schema 設計成：
+>   - JSON 欄位處理任意結構
+>   - primary_score 整數欄位處理排行榜效能
+>   - schema_def 註冊表處理 generic UI 渲染
+> 
+> 然後我做了第二個前台（Game-test-v2）驗證：
+>   - 同一個會員可以在兩個前台共用 session
+>   - 分數可以跨前台累積
+>   - 排行榜可以跨前台合併
+> 
+> 整套架構從架構設計到實作交付到測試驗證，
+> 是我在沒有 PM 沒有設計師沒有同事 review 的情況下，
+> 一個人從零到一完成的 multi-tenant SaaS PoC。」
+
+**這個故事的殺傷力：**
+- 證明你會 API-first 設計（不是 monolith 思維）
+- 證明你會 generic schema 設計（JSON + primary key 混合）
+- 證明你會 CORS / token / cross-origin 認證
+- 證明你會「為了驗證設計而額外做測試前台」的工程紀律
+- 最重要：**這是 multi-tenant SaaS 的核心模式**
+
+### 7.6 Phase 7 對「商品化」的意義
+
+```
+之前的 Phase 1-6 給你：
+  ✓ Senior PHP Backend 的能力證明
+  ✓ DevOps + 前端 showcase 加分
+  
+Phase 7 給你：
+  ✓ 「我能 design 一個 SaaS 級的會員中心」的證明
+  ✓ 商品化的真實雛形（不是 demo, 是 PoC）
+  ✓ 一個獨特的面試故事（多數人沒做過這個練習）
+```
+
+**戰略意義：** Phase 7 完成後，你不只能投 Senior Backend，還能投 **「Lead Engineer for SaaS Platform」** 級別的職位（120-150K）。
+
+### 7.7 注意事項
+
+- **不要在 Phase 1-2 還沒做完前急著做 Phase 7**——schema 設計需要先有 Members CRUD 的基礎
+- **Game-test repo 保持獨立**——不要 merge 進 ez_crm
+- **用 ez_crm 的 develop 分支做 CORS 測試**——不要動到 main
+- **Phase D 的「第二前台」可以很簡單**——換個 logo 換個底色就夠證明架構成立
+
+### 7.8 Phase 7 時程在整體中的位置
+
+```
+建議插入位置：Phase 4 完成後、Phase 5 之前
+
+Week 1-3    Phase 1  Members CRUD + RBAC
+Week 4-7    Phase 2  Points + Coupon + Order
+Week 8-10   Phase 3  Docker + Redis + Queue
+Week 11-12  Phase 4  50 萬筆壓測
+Week 13-20  Phase 7  ★ Game-test 整合（6-8 週）
+              ┃
+              ┃ 完成後可以開始投履歷
+              ┃ 鎖定「Senior + SaaS 經驗」的職位
+              ▼
+Week 21-24  Phase 5  DevOps（選做）
+Week 25-28  Phase 6  前端 showcase（選做）
+```
+
+**為什麼把 Phase 7 放在 5/6 之前？** 因為它對「商品化」目標最直接，也最能在面試時當主力故事。Phase 5/6 是加分項，Phase 7 是新的主場。
+
+---
+
+## 八、職涯路線總覽（含 Phase 5/6/7）
 
 完成不同 Phase 對應不同職涯路線：
 
 ```
-完成度          可投職位                          薪資帶
-─────────────────────────────────────────────────────
-Phase 1-4       Senior PHP/Laravel Backend       85-110K
-   + Phase 5    Platform Engineer / DevOps      95-130K  ★ 你的優勢
-   + Phase 6    Full-Stack Engineer              90-120K
-   + Phase 5+6  Tech Lead / Principal Engineer   110-150K ★★ 最強組合
+完成度              可投職位                          薪資帶
+─────────────────────────────────────────────────────────
+Phase 1-4           Senior PHP/Laravel Backend       85-110K
+   + Phase 7 ★      Senior + SaaS Platform Eng       100-130K  ★★ 商品化路徑
+   + Phase 5        Platform Engineer / DevOps      95-130K
+   + Phase 6        Full-Stack Engineer              90-120K
+   + Phase 5+6+7    Tech Lead / Principal Engineer  120-160K  ★★★ 最強組合
 ```
 
 **戰略建議：**
 
 | 你的偏好 | 建議路線 |
 |---------|---------|
+| 想商品化、想做 SaaS 產品 | Phase 1-4 + 7 ★ 商品化路徑（你的核心目標）|
 | 純架構設計、深度而非廣度 | Phase 1-4 + 跳 Senior Backend |
-| 喜歡碰 infra、想做工程師背後的工程師 | Phase 1-5 + 跳 Platform Engineer ⭐ |
-| 想當 small team 的 one-man-army | Phase 1-6 全做 + 跳 Tech Lead ⭐⭐ |
-| 不想學前端（前端會老） | Phase 1-5 即可 |
+| 喜歡碰 infra | Phase 1-5 + 7 + 跳 Platform Engineer |
+| 想當 small team 的 one-man-army | Phase 1-7 全做 + 跳 Tech Lead ⭐⭐ |
 
-**我的個人建議：** **Phase 5 必做，Phase 6 選做。**
+**修正後的個人建議：** **Phase 7 必做（你的核心目標就在這），Phase 5 必做（已有實戰經驗低成本高回報），Phase 6 選做。**
 
 理由：
-- Phase 5 的 DevOps 經驗是你已經有的，文件化成本低、回報高
-- Phase 6 的前端會佔你較多時間，且台灣前端市場已飽和
-- Phase 5 帶來的薪資跳幅（+10-20K）大於 Phase 6 的（+5-10K）
-- 完成 Phase 5 後再決定要不要做 Phase 6
+- Phase 7 是你「異想天開」目標的具體實現路徑
+- Phase 7 帶來的薪資跳幅可能比 Phase 5/6 加起來都大（+15-30K）
+- 因為「會 design SaaS multi-tenant 架構」在台灣市場稀缺
+- 完成 Phase 7 後你的 profile 從「Senior Backend」升級到「SaaS Architect」
 
 ---
 
