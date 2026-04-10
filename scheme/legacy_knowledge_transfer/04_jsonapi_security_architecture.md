@@ -404,15 +404,55 @@ Sep 19 (Fri)  ┌─ Phase 4：相容性
    16:25      │  98a368fa5 — buildLimit/appendLimit 工具
    16:37      └─ Phase 4 結束 (2 hrs)
               
-Sep 22 (Mon)  終於拿到 dev_sql_injection 分支
-              開始在分支上做 fetch_arrr 遷移
-              
+              ⚠️ 整個 9 天衝刺都在 dev_sql_injection 分支上完成
+                 （我自己 git checkout -b 開的本地分支，正常 push 到 origin）
+                 經 git merge-base 驗證：與 master 的共同祖先是
+                 02f30c280 (Sep 01)，從此分裂成獨立分支
+
+Sep 21 (Sun)  ┌─ dev_sql_injection 上繼續
+   23:57      │  fdcd4545c — update database.php (+195 lines)
+              │  
+Sep 22 (Mon)  │  
+   00:36      │  a9a3add07 — update database.php (+211 lines)
+   00:37      │  7d16a84d9 — "starttttttttt"
+              └─ 凌晨收尾
+
+   10:46      ⚠️ terry 在 sql_jection 分支 commit「工作階段完成」
+              ← 但 git 上只加了一行註解 // 20250922
+              ← 真正的工作：用 FTP 直接蓋線上 main 程式碼
+              ← 造成 git 和線上的程式碼不一致
+              ← webhook 部署系統開始出錯
+
+   11:35      7a53d8eee — "git test" (動了 _gitBranchTest.txt)
+              ← 我在測試 plesk webhook 是否還正常運作
+              ← 因為 terry 用 FTP 蓋線上造成 webhook 錯誤
+              ← 而且因為我是最後一個正常 push 的人，差點背黑鍋
+
+   12:15      7d60600db — Merge terry 的 4e7c2bd8e 進 dev_sql_injection
+              （把 terry 還願意走 git 的那部分 merge 進來）
+
+   13:10      880b63a80 — 「將 sql_injection branch 上針對 database.php 中 query() 合併改正」
+
 Sep 23~30     objects/ 17 個業務檔案 fetch_arrr 遷移
-              14 筆 commit
+              14 筆 commit（這部分可以在分支上做了）
               
-2026-01-23    dev_sql_injection 終於 merge 回 master
-              （從開分支到 merge 等了 4 個月）
+2026-01-23    10937b400 — Merge dev_sql_injection 回 master
+              從拿到分支（Sep 22）到 merge 回 master（Jan 23）等了 4 個月
 ```
+
+### 證據檔案
+
+`_gitBranchTest.txt` 是我長期用來測試 git 權限的檔案。每次拿到新分支權限就會 commit 一筆來確認能 push：
+
+```
+2023-07-17  to mark the original master branch
+2024-01-31  gittest for ddm（第一次拿到分支）
+2024-09-27  this is git test branch（測試 git test 分支）
+2025-09-22  git test  ← dev_sql_injection 分支
+2026-01-23  prepare to merge to master branch
+```
+
+這個檔案是「我什麼時候拿到分支」的鐵證。任何面試官質疑「你說你沒有分支權限」時，這個檔案的 git history 就是答案。
 
 **統計：**
 - 日曆天：9 天（Sep 11 → 19）
@@ -447,15 +487,63 @@ Sep 23~30     objects/ 17 個業務檔案 fetch_arrr 遷移
 
 這個改造不是在理想環境下做的。實際情況：
 
-| 障礙 | 影響 |
-|------|------|
-| **沒有分支權限** | 9 天的核心架構工作全部在 master 上直接做 |
-| **沒有 code review 制度** | 沒人能 review 我的程式碼，但有人會造成 regression |
-| **沒有 staging 環境** | 改了直接面對 production |
-| **有人直接 push 到 master 造成事故** | 後來甚至有 bot 誤刪 2,025 行，我修過的東西被搞壞 |
-| **dev_sql_injection 等了 4 個月才被允許 merge** | 從 2025-09-22 開分支到 2026-01-23 merge |
+| 障礙 | 真實情況 |
+|------|---------|
+| **開分支需要「口頭確認」** | 技術上沒有任何 push 限制，但組織文化要求口頭核准。既無 PR 制度的好處（強制 review），也無自由分支的好處（敏捷迭代）。 |
+| **沒有 code review 制度** | 9 天的核心架構工作沒有任何人 review。我只能靠自己寫的 attack_harness 自動化測試當作品質把關。 |
+| **沒有 staging 環境** | 改了直接面對 production。 |
+| **主管不走 git 流程，用 FTP 蓋線上** | Sep 22 親身遇到：terry 用 FTP 直接蓋 main 程式造成 webhook 出錯，git 上只留了一行 `// 20250922` 註解當門面。我差點被栽贓——因為我是最後一個正常 push 的人。 |
+| **dev_sql_injection 等了 4 個月才能 merge** | 從 2025-09-22 衝刺結束到 2026-01-23 才被允許 merge 回 master |
+| **後續還有 bot 誤刪 2,025 行** | 我修過的東西被 AI agent 大規模誤刪 |
 
-**這些阻力是 Strangler Fig 策略的最大原因。** 如果有正常的分支 + review + staging，我可以做 big-bang 重構；正因為沒有，所以必須選最低風險的路徑。
+### terry FTP 事件詳述（這是最強的離職故事）
+
+**時間：** 2025-09-22 上午
+
+**事件：**
+1. **10:46** terry 在 `sql_jection` 分支（拼錯字的）commit 一筆「工作階段完成」  
+   → git 上只加了一行 `// 20250922` 註解  
+   → 真正的工作完全沒走 git，是用 FTP 直接蓋線上 main 程式碼
+2. **線上系統開始出錯** — 因為 plesk 上的 webhook 自動部署偵測到 git 和線上不一致
+3. **11:35** 我必須去測試 webhook 找出問題（commit `7a53d8eee`，動了 `_gitBranchTest.txt`）
+4. **責任歸屬問題：** 因為我是最後一個正常 push 的人（dev_sql_injection 上的 commits），如果鍋按「最後動程式的人」算，會算到我頭上
+5. **我必須花時間 debug 一個我沒造成的問題**
+
+**這個事件揭露的本質：**
+
+```
+我（kevino430）：
+  - 開分支要口頭確認
+  - 用 git push 走正規流程
+  - 寫 commit message
+  - merge 要等 4 個月
+
+主管（terry）：
+  - 開分支不需要任何確認（包括拼錯字的 sql_jection）
+  - 用 FTP 直接蓋線上
+  - git 上留一行註解當門面
+  - 造成系統錯誤後不負責 debug
+```
+
+**這是技術權力的不對稱使用：** 主管強加 git 紀律給下屬，自己卻完全繞過。
+
+**證據檔案：** [`_gitBranchTest.txt`](https://github.com/kevino430/_gitBranchTest.txt) 記錄了多年來所有 git 環境變化的測試 commit。Sep 22 那筆「git test」就是 webhook 排錯紀錄。
+
+---
+
+**面試講這段時的關鍵訊息（要練得很順）：**
+
+> 「我做安全改造的時候，9 天的核心架構工作是在一個獨立分支上完成的——分支是我自己 git checkout -b 開的，技術上沒有任何 push 限制，但組織文化要求『口頭確認』才能開分支。完成後等了 4 個月才被允許 merge 回 master，而且全程沒有任何人 review 我的程式碼。」
+
+> 「比較大的衝擊是：在這個專案期間，我發現主管會繞過 git 流程，用 FTP 直接蓋線上程式碼，造成 git 和線上不一致。webhook 部署系統開始出錯時，我必須花時間 debug 一個不是我造成的問題。」
+
+> 「這些經驗讓我深刻理解：**好的工程實踐——code review、staging 環境、強制 git 流程、自動化 CI——不是奢侈品，是必需品**。我希望加入有這些基礎建設、且整個團隊（包含管理層）都遵守紀律的環境。」
+
+> ⚠️ **講這段時的注意事項：** 
+> - 不要點名 terry 或前公司
+> - 用「我看過的反例」而不是「我遇過的爛主管」
+> - 重點放在「我從中學到什麼」，不是「他們做錯什麼」
+> - 面試官想聽的是「你的成長」，不是「你的怨念」
 
 **面試講法（這段要練）：**
 > 「我做這個改造的時候，公司沒有分支權限給我，所以核心架構全部在 master 上直接寫。沒有 code review，沒有 staging 環境，改了就直接上 production。這些限制塑造了我的技術選擇——Strangler Fig 不是我的偏好，是我在那個環境下的唯一安全做法。經歷過這個專案讓我深刻理解：**好的工程實踐不是奢侈品，是必需品**。我希望加入有 code review、有 CI/CD、有 staging 環境的團隊。」
