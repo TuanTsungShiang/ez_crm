@@ -424,32 +424,300 @@ scheme/performance/screenshots/             （壓測截圖）
 ## 四、時程總覽
 
 ```
+核心路徑（必做）
+─────────────────
 Week 1-3    Phase 1  Members CRUD + RBAC
 Week 4-7    Phase 2  Points + Coupon + Order（業務複雜度）
 Week 8-10   Phase 3  Docker + Redis + Queue + Rate Limit
 Week 11-12  Phase 4  50 萬筆壓測 + 效能報告
 
-            ┃ 可開始投履歷
+            ┃ 可開始投履歷（鎖定 Senior PHP / Laravel Backend 職位）
             ▼
 Week 12+    面試準備：整理技術故事 + 練口說
+
+延伸路徑（依職涯方向選做）
+──────────────────────────
+Week 13-16  Phase 5  DevOps / Platform Engineer 證明（選做）
+                     → 多打開一條職涯路：Platform Engineer / Full-Stack
+Week 17-20  Phase 6  前端能力 showcase（選做）
+                     → 多打開一條職涯路：Full-Stack Engineer
 ```
 
 ---
 
-## 五、不需要做的事
+## 五、Phase 5：DevOps / Platform Engineer 證明（選做）
+
+### 為什麼這 Phase 對你特別有價值
+
+你已經在公司做了業界少見的事情：
+
+| 現有實戰經驗（git 沒有，但你做過） | 證據 |
+|-----------------------------------|------|
+| VM 設定 | 自己處理過 |
+| Plesk 控制台設定 | 自己摸出來的 |
+| Cloudflare DNS / WAF / 邊緣設定 | 部分自學 |
+| Google Ads API 整合 | linky-360-tools/googleadapi/ 用自己 Google 帳號試 |
+| Google Tag Manager 測試頁建構 | linky-360-tools/UTM_GtmTestPage.php |
+| Facebook Open Graph 除錯 | island_tales 解過手機 FB 分享 deep link 劫持 |
+
+**業界實際情況：** 一般 PHP Senior 工程師不會 infra，一般 DevOps 不會深度 PHP。**你剛好兩邊都會。** 這在台灣市場是稀缺組合。
+
+### 5.1 把實戰經驗轉成可展示資產
+
+**問題：** 你做過這些事，但 git 上沒有證據。面試官無法驗證。
+
+**解法：** 把它們從「腦袋裡的經驗」變成「ez_crm 上的文件 + 配置檔」。
+
+#### 任務 1：在 ez_crm 寫一份完整的部署文件
+
+```
+ez_crm/scheme/deployment/
+├── 01_vm_provisioning.md        VM 從 0 到能跑 PHP 的步驟
+├── 02_plesk_setup.md            Plesk 上部署 Laravel 的眉角
+├── 03_cloudflare_config.md      DNS、Cache Rule、Page Rule、WAF 設定
+├── 04_google_oauth_setup.md     從申請 Google Cloud 專案到拿到 client_secret
+├── 05_google_ads_api_integration.md  Google Ads API 對接流程
+├── 06_meta_tags_og_debug.md     OG / Twitter Card 除錯流程（FB Sharing Debugger 用法）
+└── 07_disaster_recovery.md      備份與災難復原 SOP
+```
+
+每份文件包含：
+- 操作步驟
+- 踩過的坑與解法
+- 截圖（隱去敏感資訊）
+- 與 Laravel/PHP 的整合點
+
+**時間：** 1 週（每天寫 1 份）
+
+#### 任務 2：建立完整的 docker-compose 生產級堆疊
+
+不只是 Phase 3 的 dev 環境，要做 production-grade：
+
+```yaml
+# docker-compose.production.yml 概念
+services:
+  app:        # PHP 8.2-FPM + Laravel
+  nginx:      # 含 Cloudflare real-ip 設定
+  mysql:      # 含 backup script
+  redis:      # cache + queue + session
+  queue:      # supervisor 跑 queue worker
+  scheduler:  # cron 跑 schedule:run
+  
+networks:
+  internal:   # 只有 app/db/redis 在這
+  public:     # nginx 在這
+  
+volumes:
+  mysql_data:
+  redis_data:
+```
+
+**包含：**
+- Multi-stage Dockerfile（builder / production 兩階段）
+- Nginx config 含 Cloudflare 真實 IP 處理
+- Supervisor 配置（queue worker + scheduler）
+- 環境變數分離（.env.production / .env.staging）
+- Backup script + 還原 script
+
+**時間：** 1 週
+
+#### 任務 3：寫一篇技術 blog 講「我如何在 Plesk + Cloudflare 環境下部署 Laravel」
+
+這是 Senior Platform Engineer 必殺技——**用「真實環境踩坑經驗」打敗其他「只在 docker 上跑過」的競爭者**。
+
+**內容大綱：**
+- Plesk 與 Laravel 的相容性陷阱
+- Cloudflare 後 IP 處理（trustedproxies）
+- Plesk Cron 與 Laravel Scheduler 整合
+- Cloudflare Page Rules 與 Laravel 路由衝突
+- 為什麼你選擇 Plesk 而不是純 Docker（業務考量）
+
+**時間：** 3 天
+
+#### 任務 4：補一個面試故事
+
+```
+「我曾經在沒有 mentor 的情況下，
+ 自己摸索出 VM + Plesk + Cloudflare + Laravel 的部署架構。
+ 過程中踩過 7 個坑（列出來），
+ 最後寫成 SOP 文件給後續維護的人。
+ 
+ 我相信 DevOps 不是『另一個專業』，
+ 是 backend engineer 應該具備的『環境理解能力』。」
+```
+
+### 5.2 Phase 5 交付物
+
+```
+ez_crm/
+├── scheme/deployment/                  7 份部署文件
+├── docker/
+│   ├── Dockerfile                      multi-stage
+│   ├── docker-compose.dev.yml
+│   ├── docker-compose.production.yml
+│   ├── nginx/cloudflare-realip.conf
+│   └── supervisor/laravel-worker.conf
+└── scheme/blog_drafts/
+    └── plesk_laravel_cloudflare_deployment.md
+```
+
+### 5.3 Phase 5 多打開的職涯路
+
+| 職位 | 薪資（台灣）| 為什麼你是好人選 |
+|------|-----------|---------------|
+| **Platform Engineer (PHP/Laravel)** | 95-130K | 後端 + DevOps 雙棲，業界稀缺 |
+| **DevOps Engineer (with PHP background)** | 90-120K | 懂 PHP 應用層的痛點，能精準調效能 |
+| **SRE for PHP Stack** | 100-140K | 同上，更偏可靠性工程 |
+
+---
+
+## 六、Phase 6：前端能力 showcase（選做）
+
+### 為什麼這 Phase 對你也有價值
+
+你在 island_tales 證明了你能寫前端：
+
+| 你的前端實戰證據 |
+|---------------|
+| 269 commits / 156K 行程式碼 |
+| HTML / CSS / JS / Bootstrap / Swiper / jQuery |
+| **解決過手機 FB 分享 deep link 劫持閃退**（業界惡名昭彰的 bug）|
+| **修正 OG image 在 FB / Twitter 分享無縮圖** |
+| `navigator.share()` 跨平台處理 |
+| Facebook Sharing Debugger 排查經驗 |
+| 響應式 RWD（jianhow 282 commits 是搭檔，所以你不是一個人扛但有實戰經驗）|
+
+**業界實際情況：** 純後端工程師很多，純前端工程師很多，但「會解 FB Open Graph deep link 劫持」這種跨領域 debug 能力的人很少。
+
+### 6.1 把實戰經驗轉成展示資產
+
+#### 任務 1：在 ez_crm 加一個簡易 admin SPA
+
+不需要 React/Vue（學習成本高）。**用 Alpine.js + Tailwind + Blade**——這是 Laravel 生態最簡單的前端組合：
+
+```
+ez_crm/resources/views/admin/
+├── members/
+│   ├── index.blade.php      列表（含 Alpine.js 排序、篩選）
+│   ├── show.blade.php       單筆檢視
+│   └── form.blade.php       新增/編輯
+├── points/
+│   ├── adjust.blade.php     點數調整介面（含 modal）
+└── orders/
+    └── list.blade.php       訂單列表（含 Alpine.js 即時搜尋）
+```
+
+**為什麼用 Alpine + Tailwind：**
+- Alpine.js 是 Laravel 創辦人 Caleb 寫的，跟 Laravel 完美整合
+- 學習曲線比 React/Vue 平緩 80%
+- 看起來像現代 SPA，但實作上是 Blade + 一點點 JS
+- 面試官會說「你會 Alpine + Tailwind 嗎？」（會的人不多）
+
+**時間：** 2 週
+
+#### 任務 2：寫一篇技術 blog 講「手機 FB 分享 deep link 閃退」
+
+這是你已經解過的真實問題，把它寫出來：
+
+```markdown
+# 為什麼手機 Chrome 上 FB 分享按鈕會閃退？
+## 問題現象
+## 為什麼會發生（FB App deep link 劫持機制）
+## 我試過的解法
+  - 解法 1：window.open（失敗，原因 X）
+  - 解法 2：a target=_blank（失敗，原因 Y）
+  - 解法 3：navigator.share() ★ 可行
+## 跨平台處理（iOS / Android / Desktop）
+## 完整可用的程式碼
+```
+
+這篇文章如果寫好，會被 SEO 搜到。**這就是技術 blog 的最高境界——「在 Google 搜尋『手機 FB 分享閃退』時你的文章是第一個」。**
+
+**時間：** 3 天
+
+#### 任務 3：補一個面試故事
+
+```
+「我在一個旅遊內容網站解過手機 FB 分享 deep link 劫持的問題。
+ 那個 bug 在 Stack Overflow 上有十幾個 thread 都沒完美解法。
+ 我用 navigator.share() + iOS/Android 不同 fallback 解決了，
+ 還寫成 blog 給其他人參考。
+ 
+ 這個故事能證明：
+   - 我會前端也會後端
+   - 我會在文件不足的情況下解陌生領域的 bug
+   - 我會把解法文件化幫助別人」
+```
+
+### 6.2 Phase 6 交付物
+
+```
+ez_crm/
+├── resources/views/admin/    Alpine.js + Tailwind admin UI
+├── public/build/             Vite 編譯後的 frontend assets  
+└── scheme/blog_drafts/
+    └── fb_share_mobile_deeplink_fix.md   手機 FB 分享閃退完整修復方案
+```
+
+### 6.3 Phase 6 多打開的職涯路
+
+| 職位 | 薪資（台灣）| 為什麼你是好人選 |
+|------|-----------|---------------|
+| **Full-Stack Engineer (PHP + Frontend)** | 80-110K | 後端強 + 能寫前端，team 不需要找兩個人 |
+| **Laravel Full-Stack** | 85-115K | Laravel 生態本來就 Blade-first，不需要 React/Vue |
+| **Technical Lead（小團隊）** | 100-140K | 能 cover 全 stack 是 small team lead 的硬條件 |
+
+---
+
+## 七、職涯路線總覽（含 Phase 5/6）
+
+完成不同 Phase 對應不同職涯路線：
+
+```
+完成度          可投職位                          薪資帶
+─────────────────────────────────────────────────────
+Phase 1-4       Senior PHP/Laravel Backend       85-110K
+   + Phase 5    Platform Engineer / DevOps      95-130K  ★ 你的優勢
+   + Phase 6    Full-Stack Engineer              90-120K
+   + Phase 5+6  Tech Lead / Principal Engineer   110-150K ★★ 最強組合
+```
+
+**戰略建議：**
+
+| 你的偏好 | 建議路線 |
+|---------|---------|
+| 純架構設計、深度而非廣度 | Phase 1-4 + 跳 Senior Backend |
+| 喜歡碰 infra、想做工程師背後的工程師 | Phase 1-5 + 跳 Platform Engineer ⭐ |
+| 想當 small team 的 one-man-army | Phase 1-6 全做 + 跳 Tech Lead ⭐⭐ |
+| 不想學前端（前端會老） | Phase 1-5 即可 |
+
+**我的個人建議：** **Phase 5 必做，Phase 6 選做。**
+
+理由：
+- Phase 5 的 DevOps 經驗是你已經有的，文件化成本低、回報高
+- Phase 6 的前端會佔你較多時間，且台灣前端市場已飽和
+- Phase 5 帶來的薪資跳幅（+10-20K）大於 Phase 6 的（+5-10K）
+- 完成 Phase 5 後再決定要不要做 Phase 6
+
+---
+
+## 八、不需要做的事（修正版）
 
 | 不需要 | 原因 |
 |--------|------|
 | 搬 linky360 全部 76 支 API | 數量不代表能力，10 支做到深就夠了 |
 | BigQuery 整合 | 太貴且面試不會問，改用 MySQL + Redis 證明效能即可 |
-| 前端 SPA | 你定位後端，Swagger UI 就是最好的「前端」|
+| ~~前端 SPA~~ → 改為「Phase 6 選做」 | island_tales 證明你能做，可以變成額外籌碼 |
+| React / Vue 框架 | Alpine.js 已足夠展示前端能力，學習成本低 80% |
 | 微服務拆分 | 單體做好比硬拆微服務有說服力 |
-| Kubernetes | Docker Compose 已足夠，K8s 是 DevOps/SRE 的活 |
+| Kubernetes | Docker Compose 已足夠，K8s 是純 DevOps 的活 |
+| AWS / GCP 證照 | 你的實戰經驗比證照更值錢，但可以考一張當履歷加分 |
 
 ---
 
-## 六、參考資源
+## 九、參考資源
 
+### 核心 Phase 1-4
 | 主題 | 資源 |
 |------|------|
 | Laravel 進階 | [Laravel Beyond CRUD](https://laravel-beyond-crud.com/) — Service Layer、Action、DTO |
@@ -458,3 +726,21 @@ Week 12+    面試準備：整理技術故事 + 練口說
 | Docker 最佳實踐 | [Docker PHP Best Practices](https://github.com/serversideup/docker-php) |
 | RBAC | [Spatie Laravel Permission](https://spatie.be/docs/laravel-permission) |
 | 狀態機 | [Spatie Laravel Model States](https://spatie.be/docs/laravel-model-states) |
+
+### Phase 5: DevOps / Platform
+| 主題 | 資源 |
+|------|------|
+| Cloudflare for Devs | [Cloudflare Developers Docs](https://developers.cloudflare.com/) |
+| Plesk + Laravel | [Plesk Laravel Extension Docs](https://docs.plesk.com/) |
+| Nginx + Laravel | [Laravel Forge Best Practices](https://forge.laravel.com/docs/) |
+| Google Ads API | [Google Ads API PHP Client](https://github.com/googleads/google-ads-php) |
+| Supervisor for Queue | [Laravel Queue Workers in Production](https://laravel.com/docs/queues#supervisor-configuration) |
+
+### Phase 6: 前端 showcase
+| 主題 | 資源 |
+|------|------|
+| Alpine.js | [Alpine.js 官方](https://alpinejs.dev/) |
+| Tailwind CSS | [Tailwind 官方](https://tailwindcss.com/) |
+| Laravel Blade | [Laravel Blade Components](https://laravel.com/docs/blade) |
+| OG / Meta Tags | [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) |
+| navigator.share() | [MDN Web Share API](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share) |
