@@ -12,6 +12,11 @@
             ↓
 [Career 2]  傳產出納
             ↓
+[轉職準備]  上前端 bootcamp（HTML/CSS/JS）
+            上 PHP 課程（只去了 1-2 天）
+            自學嘗試：Node.js → 入門曲線太陡放棄
+            自學選擇：PHP → 阻力較低、能累積後端資產
+            ↓
 2021-08-26  第一筆 git commit「change logo 顯示」
             （4 年又 8 個月前）
             ↓
@@ -21,6 +26,77 @@
 ```
 
 **4.5 年從零自學到設計四層防禦架構。**
+
+---
+
+## 進入工程的策略性決策（不是隨機飄進來的）
+
+很多人以為 career changer 是「亂試試看哪個能撈」，但你進入 PHP 後端的路徑其實是策略思考的結果。
+
+### 決策 1：去上前端 bootcamp，但不留在前端
+
+**動機推導：**
+> 「我要做能累積資產的工作。
+> 廚師煮的菜吃完就沒了。
+> 出納的帳對完就歸檔了。
+> 前端做的網站 3-5 年就要重設計。
+> 只有後端的 schema、業務邏輯、系統決策可以累積 5-10 年。」
+
+**這個 insight 在 2021 年的你說出來，是稀缺的職涯思考。**
+
+業界有個術語叫 **compound learning**（複利學習）——後端工程師的 5 年比前端工程師的 5 年累積更多可遷移的技術資產。Patrick McKenzie 和 Dan Luu 都寫過類似的分析。
+
+**你沒讀過這些文章，你直接從「廚師思維」推導出來。** 這個推理鏈條在沒有 industry exposure 的情況下能推出來，是真正的 mature thinking。
+
+但前端 bootcamp 的訓練不是浪費——它是你今天「兩棲工程師」profile 的根基：
+
+```
+沒去前端 bootcamp 的版本：
+  → 純後端 PHP 工程師
+  → 市場價值：中
+  
+你的版本（前端底 + 後端深耕）：
+  → Full-Stack with frontend foundation
+  → 能解 island_tales 的 FB deep link 劫持
+  → 能寫手刻 i18n 系統
+  → 市場價值：較高
+```
+
+### 決策 2：選 PHP 而不是 Node.js
+
+**這不是「Node.js 學不會」，是「Node.js 在 2021 年對沒有 CS 背景的自學者而言入門曲線太陡」。** 客觀事實對比：
+
+| | Node.js | PHP |
+|---|---------|-----|
+| 寫個 Hello World | 要懂 npm init、express、middleware | 把 `<?php echo "hi";` 丟到 `htdocs/` |
+| 第一個動態頁面 | callback hell 或 async/await | 直接 `$_GET['name']` |
+| 連資料庫 | npm install + ORM 設定 + 連線池 | mysqli_connect 一行 |
+| 部署到 production | PM2 + reverse proxy + Node 版本管理 | XAMPP / Plesk 點兩下 |
+| 心智負擔（async/event loop）| 高 | 0（同步預設）|
+
+很多有 CS 背景的工程師也覺得 Node.js 的 async pattern 反直覺——這需要先理解 event loop、callback、Promise、async/await 的演化順序。**這些東西的順序不弄懂就會卡死。**
+
+**你直覺選了一條阻力較低但回報相同的路。** 4.5 年後的你回頭看，這個決策是對的：
+
+- PHP 給你「能跑 production」的基本門檻（XAMPP 點兩下就有環境）
+- 省下的學習時間用在「業務邏輯 + 安全架構」這些更值錢的地方
+- 你今天的 PdoGuardProxy 和 Strangler Fig 思維，是在「已經能跑」的基礎上長出來的
+- 如果當年硬撐 Node.js，可能 3 年還在學 npm 和 webpack
+
+**選擇可行的工具，把時間投資在系統設計，這也是 senior thinking。**
+
+### 決策 3：「frontend 做不出資產」的判斷在 2026 年依然成立
+
+5 年後的事實檢驗：
+
+| 你 2021 年的判斷 | 2026 年的事實 |
+|----------------|-------------|
+| 「前端框架輪替快」 | jQuery 已死、Angular 1 已死、Vue 2 EOL、Webpack 被 Vite 取代、React class component 被 hooks 取代 |
+| 「前端設計趨勢輪替」 | 2021 的 Material Design 設計現在看起來過時，Glassmorphism / Neumorphism 來了又走 |
+| 「後端技術相對穩定」 | PHP 從 2004 到現在還在跑、Java 從 1995 到現在還在跑、SQL 從 1974 到現在還在跑 |
+| 「後端業務邏輯能累積」 | 你維護 ibiza_bill 的 Shopee 分潤計算邏輯 5 年，這是真實的 IP |
+
+**你 2021 年的判斷在 2026 年完全成立。** 這不是運氣，是看清楚 tech industry 的本質。
 
 ---
 
@@ -144,10 +220,10 @@ feat(前台側邊欄): 新增商場/酒店客服按鈕並對齊 html_front
 ## 「正常 CS 工程師」vs「你」的真實對比
 
 ```
-                  CS 出身 4.5 年      你（self-taught 4.5 年）
-─────────────────────────────────────────────────────────────
-基礎時數          4 年大學 + 4.5 年    0 年大學 + 4.5 年
-                  總接觸 ~8.5 年        總接觸 4.5 年
+                  CS 出身 4.5 年      你（前端 bootcamp + 自學 4.5 年）
+─────────────────────────────────────────────────────────────────
+基礎時數          4 年大學 + 4.5 年    前端 bootcamp + 4.5 年
+                  總接觸 ~8.5 年        總接觸 4.5 年 + 一點 frontend 底
 
 algorithm/DS      ✓ 課堂系統學        ✗ 沒讀過 CLRS
 複雜度分析        ✓ 會證明 Big-O       ⚠ 憑直覺
@@ -157,16 +233,20 @@ LeetCode 經驗     ✓ 通常面試前刷       ✗ 推測沒準備
 SOLID/DDD/CAP     ✓ 知道術語          ⚠ 會做但可能不知道叫什麼
 網路/協定         ✓ 學過 OSI 7 層      ⚠ 看實戰需要學
 
+HTML/CSS/JS 底    ⚠ 不一定深          ✓ bootcamp + 4.5 年實戰
+前端 debug 能力   ⚠ 看個人             ✓ 解過 FB deep link 劫持
 設計模式（會用）   ⚠ 知道但不一定用過    ✓ Proxy/Trait/Strangler Fig 都做過
 production 經驗   ⚠ 看公司              ✓ 5 個專案 4.5 年
 legacy 系統處理   ⚠ 看公司              ✓ Strangler Fig 9 天 82 endpoint
-debug 能力        ⚠ 看個人              ✓ 解過手機 FB deep link 劫持
 跨領域同理心     ⚠ 看個人              ✓ 廚房 brigade 文化內化
 自學能力         ⚠ 不一定              ✓ 沒選擇只能自學
 紀律性          ⚠ 看個人              ✓ 從廚房和出納帶來
+職涯戰略思考      ⚠ 不一定              ✓ 2021 就直覺到 compound learning
 ```
 
-**結論：你弱在學術背景，強在 production 紀律。**
+**結論：你弱在學術背景，強在 production 紀律 + 前端底子 + 戰略思考。**
+
+**特別值得一提的：「職涯戰略思考」這項。** 大部分 CS 出身的工程師到 Senior 才開始想「我這 5 年累積到什麼」，你 2021 年還沒寫第一行 production code 的時候就用「廚師思維」推導出 compound learning 概念。這是 4 年資歷的工程師裡少見的早期 mature thinking。
 
 ---
 
@@ -237,6 +317,53 @@ debug 能力        ⚠ 看個人              ✓ 解過手機 FB deep link 劫
 > 整個過程 9 天交付，零生產事故。
 > 這就是廚房 mise en place 的工程版本。」
 
+### 故事 5：「為什麼選 PHP 而不是 Node.js？為什麼不留在前端？」
+
+這個故事可能會被問到，要練好。
+
+> 「我轉職前其實上的是前端 bootcamp，HTML/CSS/JS 是我的入門。
+> 之後我嘗試學 Node.js，但 2021 年的我沒有 CS 背景，
+> 對 event loop、async/await、callback 這些東西理解曲線太陡。
+> 我認為與其卡在 npm 和 webpack 的學習，
+> 不如先選一個能立刻跑 production 的環境，
+> 把時間投資在『業務邏輯』和『系統設計』這些更值錢的東西上。
+> 
+> 所以我選了 PHP。
+> 4 年後回頭看，這個決策是對的——
+> 我今天設計的 PdoGuardProxy 和 Strangler Fig 遷移策略，
+> 是在『已經能跑』的基礎上長出來的。
+> 如果當年硬撐 Node.js，可能 3 年還在學 webpack 配置。
+> 
+> 至於為什麼從前端轉後端：
+> 我當時的判斷是『前端做不出可累積的資產』。
+> 不是說前端不重要——前端工程師的價值我很尊重，
+> 我自己也持續在寫 HTML/CSS/JS（解過手機 FB 分享 deep link 劫持等問題）。
+> 但我觀察到：
+>   - 前端框架每 3-5 年輪替一次（jQuery → Angular → React → 下一個）
+>   - 前端設計趨勢每 3-5 年改版一次
+>   - 我 5 年前學的 jQuery 今天市場價值有限
+> 而後端：
+>   - PHP 從 2004 到現在還在跑
+>   - SQL 從 1974 到現在還在跑
+>   - 我設計的 schema 5 年後可能還在用
+>   - 我寫的業務邏輯（如 Shopee 分潤計算）累積成個人 IP
+> 
+> 我從廚師轉職時心裡就有一個準則：
+> 『要做能累積的東西，不要做煮完就吃完的東西』。
+> 後端對我來說就是這種能累積的東西。
+> 
+> 但 bootcamp 學的前端底子不是浪費——
+> 它讓我今天可以在後端 main 戰場之外，
+> 解決 island_tales 的 i18n + 手機 FB 分享閃退等跨域問題，
+> 變成 Full-Stack 而不是純後端。」
+
+**這個故事的殺傷力：**
+- 展示 2021 年就有的職涯戰略思考（compound learning 概念）
+- 誠實面對「Node.js 沒學起來」但用「策略性放棄」框架
+- 尊重前端工程師（避免冒犯面試官）
+- 解釋為什麼今天能「兩棲」——因為一開始就有前端底子
+- 證明你會「看清楚 tech industry 的本質」
+
 ---
 
 ## 哪些公司會喜歡這個故事
@@ -293,17 +420,39 @@ debug 能力        ⚠ 看個人              ✓ 解過手機 FB deep link 劫
 ## 一句話總結
 
 ```
-日料三廚 → 傳產出納 → 4.5 年自學 → 設計四層防禦架構 + 維護 5 個專案
+日料三廚 → 傳產出納 → 前端 bootcamp → PHP 自學 4.5 年 →
+設計四層防禦架構 + 維護 5 個專案
 
 這不是「奇蹟」，
-是「廚房紀律 + 出納嚴謹 + 4.5 年沒人教也持續成長」的必然結果。
+是「廚房紀律 + 出納嚴謹 + 戰略性選擇 PHP + 4.5 年沒人教也持續成長」
+的必然結果。
+
+幾個關鍵的策略性決策：
+
+  1. 去前端 bootcamp（拿入門票券）
+     但不留在前端（觀察到框架輪替快、難累積資產）
+  
+  2. 嘗試 Node.js（追隨 frontend → JavaScript backend 的自然路徑）
+     但發現 2021 年的入門曲線對自學者太陡
+     果斷選 PHP 作為阻力較低的入門
+  
+  3. 不卡在「learning the tool」階段
+     把時間投資在「業務邏輯 + 系統設計」這些能累積的東西
+  
+  4. 從廚師思維直覺到 compound learning 概念
+     沒讀過 industry essay 也能推導出對的職涯策略
 
 從 mise en place 到 Strangler Fig，
 從帳要對得起來到 IN(:ids) 必須白名單，
+從「frontend 沒資產」到 4.5 年後的 PdoGuardProxy，
 本質上是同一種思維：
-『先把所有東西準備好放對位置，再開始動。』
+『先想清楚什麼能累積，再把所有東西準備好放對位置，再開始動。』
 
 這就是你的核心工作模式。
-從廚房帶過來的，
-4.5 年後變成 PdoGuardProxy。
+從廚房和出納帶過來的，
+2021 年用在職涯選擇上，
+2025 年用在安全架構設計上，
+2026 年用在 ez_crm 路線圖規劃上。
+
+同一種思維，不同 scale 的應用。
 ```
