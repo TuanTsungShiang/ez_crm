@@ -5,12 +5,18 @@
 
 ## 文件清單
 
+### 技術經驗萃取（從 linky_360）
 | 主題 | 檔案 | 我的貢獻深度 |
 |------|------|------------|
 | User Insight 行為分析 | [01_user_insight.md](01_user_insight.md) | ★★★★★ 主要維護者（user_insight_process.php 52%）|
 | BigQuery ETL Pipeline | [02_bigquery_etl.md](02_bigquery_etl.md) | ★★★ 長期維護者，DI-Tag 模組 26% |
 | Campaign Automation | [03_campaign_automation.md](03_campaign_automation.md) | ★★ 週邊參與，Targeting/AB Testing 部分貢獻 |
-| **JSON API SQL Injection 防護架構** | [04_jsonapi_security_architecture.md](04_jsonapi_security_architecture.md) | **★★★★★★ 架構設計者 + 主要實施者（皇冠級作品，1,005 行原創、9 天交付、82 endpoint 零修改）** |
+| **JSON API SQL Injection 防護架構** | [04_jsonapi_security_architecture.md](04_jsonapi_security_architecture.md) | **★★★★★★ 架構設計者 + 主要實施者（1,005 行原創、9 天交付、82 endpoint 零修改）** |
+
+### 職涯敘事
+| 主題 | 檔案 | 用途 |
+|------|------|------|
+| **Career Changer Narrative** | [05_career_changer_narrative.md](05_career_changer_narrative.md) | **日料三廚 → 傳產出納 → 4.5 年自學工程師的完整面試敘事**，包含：技能反向映射、成長軌跡 git 證據、4 個面試故事範本、目標公司類型篩選 |
 
 ## 為什麼要寫這些文件
 
