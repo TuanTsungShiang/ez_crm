@@ -1,0 +1,283 @@
+diff --git a/README.md b/README.md
+index 1a4c26b..6f0b391 100644
+--- a/README.md
++++ b/README.md
+@@ -1,66 +1,170 @@
+-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
++# ez_crm
+ 
+-<p align="center">
+-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+-</p>
++`ez_crm` 是一個以 Laravel 10 為基礎的早期 CRM / 會員管理專案，現階段重點放在會員資料模型、會員搜尋 API，以及後續 CRM 功能擴充所需的資料結構。
+ 
+-## About Laravel
++目前專案仍在開發前期與測試階段，核心方向已成形，但功能尚未完整，適合用來持續打底會員中心、標籤管理、分群搜尋與未來的後台管理能力。
+ 
+-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
++## 目前已完成
+ 
+-- [Simple, fast routing engine](https://laravel.com/docs/routing).
+-- [Powerful dependency injection container](https://laravel.com/docs/container).
+-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+-- [Robust background job processing](https://laravel.com/docs/queues).
+-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
++- 會員核心資料表與 Model
++- 會員群組 `member_groups`
++- 標籤 `tags` 與 `member_tag` 關聯
++- 會員延伸資料 `member_profiles`
++- 第三方登入關聯 `member_sns`
++- 會員搜尋 API `GET /api/v1/members/search`
++- Form Request 驗證
++- API Resource / Collection 回傳格式
++- Seeder 基礎測試資料
++- Feature Test 雛形
+ 
+-Laravel is accessible, powerful, and provides tools required for large, robust applications.
++## 技術棧
+ 
+-## Learning Laravel
++- PHP 8.1+
++- Laravel 10
++- Laravel Sanctum
++- PHPUnit 10
++- Vite
+ 
+-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
++## 本機安裝
+ 
+-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
++先安裝後端依賴：
+ 
+-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
++```bash
++composer install
++cp .env.example .env
++php artisan key:generate
++```
+ 
+-## Laravel Sponsors
++若需要前端資源：
+ 
+-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
++```bash
++npm install
++npm run dev
++```
+ 
+-### Premium Partners
++## 資料庫初始化
+ 
+-- **[Vehikl](https://vehikl.com/)**
+-- **[Tighten Co.](https://tighten.co)**
+-- **[WebReinvent](https://webreinvent.com/)**
+-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+-- **[64 Robots](https://64robots.com)**
+-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
+-- **[Cyber-Duck](https://cyber-duck.co.uk)**
+-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+-- **[Jump24](https://jump24.co.uk)**
+-- **[Redberry](https://redberry.international/laravel/)**
+-- **[Active Logic](https://activelogic.com)**
+-- **[byte5](https://byte5.de)**
+-- **[OP.GG](https://op.gg)**
++建立資料表並匯入測試資料：
+ 
+-## Contributing
++```bash
++php artisan migrate
++php artisan db:seed
++```
+ 
+-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
++如果要重建資料庫：
+ 
+-## Code of Conduct
++```bash
++php artisan migrate:fresh --seed
++```
+ 
+-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
++## 啟動專案
+ 
+-## Security Vulnerabilities
++```bash
++php artisan serve
++```
+ 
+-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
++預設開發網址通常為：
+ 
+-## License
++```text
++http://127.0.0.1:8000
++```
+ 
+-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
++## 測試
++
++執行測試前請先確認 `composer install` 已完成，且資料庫設定可供測試使用。
++
++```bash
++php artisan test
++```
++
++## 目前 API
++
++### `GET /api/v1/members/search`
++
++用途：
++
++- 搜尋會員資料
++- 支援分頁、排序與多種條件篩選
++
++驗證方式：
++
++- 需要通過 `auth:sanctum`
++
++支援的主要查詢參數：
++
++- `keyword`
++- `status`
++- `group_id`
++- `tag_ids[]`
++- `gender`
++- `has_sns`
++- `created_from`
++- `created_to`
++- `per_page`
++- `page`
++- `sort_by`
++- `sort_dir`
++
++成功回應摘要：
++
++```json
++{
++  "success": true,
++  "data": {
++    "items": [],
++    "pagination": {
++      "total": 0,
++      "per_page": 15,
++      "current_page": 1,
++      "last_page": 1
++    }
++  }
++}
++```
++
++驗證失敗回應摘要：
++
++```json
++{
++  "success": false,
++  "message": "Validation failed",
++  "errors": {
++    "per_page": [
++      "The per page must not be greater than 100."
++    ]
++  }
++}
++```
++
++## 目錄概覽
++
++```text
++app/
++  Http/
++    Controllers/Api/V1/
++    Requests/Api/V1/
++    Resources/Api/V1/
++  Models/
++  Services/
++database/
++  migrations/
++  seeders/
++routes/
++scheme/
++tests/
++```
++
++## 相關文件
++
++- `scheme/schema/member.md`
++- `scheme/api/plan_member_search_api.md`
++- `scheme/improvement_plan/2026/04/IMPROVEMENT_PLAN.md`
++- `scheme/improvement_plan/2026/04/PHASE_1_DETAILED_IMPLEMENTATION_PROPOSAL.md`
++
++## 已知限制
++
++- 專案仍在早期開發階段
++- 目前主要對外功能仍以會員搜尋 API 為主
++- 會員 CRUD、標籤管理、群組管理與更完整 CRM 流程尚未完成
++- 權限模型目前僅先做到已登入可存取，尚未進入角色權限控管
++- 搜尋效能優化與索引策略仍在後續規劃中
+diff --git a/app/Http/Requests/Api/V1/MemberSearchRequest.php b/app/Http/Requests/Api/V1/MemberSearchRequest.php
+index d80e835..c07ef7b 100644
+--- a/app/Http/Requests/Api/V1/MemberSearchRequest.php
++++ b/app/Http/Requests/Api/V1/MemberSearchRequest.php
+@@ -11,7 +11,7 @@ class MemberSearchRequest extends FormRequest
+      */
+     public function authorize(): bool
+     {
+-        return true;
++        return $this->user() !== null;
+     }
+ 
+     public function rules(): array
+diff --git a/routes/api.php b/routes/api.php
+index 5f6189b..9ac2b0b 100644
+--- a/routes/api.php
++++ b/routes/api.php
+@@ -19,6 +19,8 @@
+     return $request->user();
+ });
+ 
+-Route::prefix('v1')->group(function () {
+-    Route::get('members/search', [MemberController::class, 'search']);
+-});
++Route::prefix('v1')
++    ->middleware('auth:sanctum')
++    ->group(function () {
++        Route::get('members/search', [MemberController::class, 'search']);
++    });
+diff --git a/tests/Feature/Api/V1/MemberSearchTest.php b/tests/Feature/Api/V1/MemberSearchTest.php
+index 2db2e2b..475ed44 100644
+--- a/tests/Feature/Api/V1/MemberSearchTest.php
++++ b/tests/Feature/Api/V1/MemberSearchTest.php
+@@ -7,6 +7,7 @@
+ use App\Models\MemberProfile;
+ use App\Models\MemberSns;
+ use App\Models\Tag;
++use App\Models\User;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Support\Str;
+ use Tests\TestCase;
+@@ -20,11 +21,21 @@ class MemberSearchTest extends TestCase
+     protected function setUp(): void
+     {
+         parent::setUp();
++        $this->actingAs(User::factory()->create());
+         $this->seedBaseData();
+     }
+ 
+     // ---- 基本結構 ----
+ 
++    public function test_requires_authentication(): void
++    {
++        $this->app['auth']->forgetGuards();
++
++        $response = $this->getJson($this->endpoint);
++
++        $response->assertStatus(401);
++    }
++
+     public function test_returns_success_response_structure(): void
+     {
+         $response = $this->getJson($this->endpoint);

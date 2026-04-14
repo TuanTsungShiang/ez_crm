@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Member;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class MemberSearchService
@@ -16,14 +17,14 @@ class MemberSearchService
         $this->applyKeyword($query, $params['keyword'] ?? null);
         $this->applyFilters($query, $params);
 
-        $sortBy  = $params['sort_by'] ?? 'created_at';
-        $sortDir = $params['sort_dir'] ?? 'desc';
+        $sortBy  = $this->resolveSortBy($params['sort_by'] ?? null);
+        $sortDir = $this->resolveSortDir($params['sort_dir'] ?? null);
         $query->orderBy($sortBy, $sortDir);
 
         return $query->paginate($params['per_page'] ?? 15);
     }
 
-    private function applyKeyword($query, ?string $keyword): void
+    private function applyKeyword(Builder $query, ?string $keyword): void
     {
         if (!$keyword) {
             return;
@@ -37,7 +38,7 @@ class MemberSearchService
         });
     }
 
-    private function applyFilters($query, array $params): void
+    private function applyFilters(Builder $query, array $params): void
     {
         if (isset($params['status'])) {
             $query->where('status', $params['status']);
@@ -48,9 +49,7 @@ class MemberSearchService
         }
 
         if (!empty($params['tag_ids'])) {
-            foreach ($params['tag_ids'] as $tagId) {
-                $query->whereHas('tags', fn($q) => $q->where('tags.id', $tagId));
-            }
+            $this->applyTagFilters($query, $params['tag_ids']);
         }
 
         if (isset($params['gender'])) {
@@ -70,5 +69,30 @@ class MemberSearchService
         if (!empty($params['created_to'])) {
             $query->whereDate('created_at', '<=', $params['created_to']);
         }
+    }
+
+    private function applyTagFilters(Builder $query, array $tagIds): void
+    {
+        $tagIds = array_values(array_unique($tagIds));
+
+        $query->whereIn('members.id', function ($sub) use ($tagIds) {
+            $sub->select('member_id')
+                ->from('member_tag')
+                ->whereIn('tag_id', $tagIds)
+                ->groupBy('member_id')
+                ->havingRaw('COUNT(DISTINCT tag_id) = ?', [count($tagIds)]);
+        });
+    }
+
+    private function resolveSortBy(?string $sortBy): string
+    {
+        $allowedSorts = ['created_at', 'last_login_at', 'name'];
+
+        return in_array($sortBy, $allowedSorts, true) ? $sortBy : 'created_at';
+    }
+
+    private function resolveSortDir(?string $sortDir): string
+    {
+        return $sortDir === 'asc' ? 'asc' : 'desc';
     }
 }

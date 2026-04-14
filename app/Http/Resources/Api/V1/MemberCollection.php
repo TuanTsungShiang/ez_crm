@@ -28,6 +28,7 @@ class MemberCollection extends ResourceCollection
     {
         return [
             'success' => true,
+            'code'    => \App\Enums\ApiCode::OK,
             'data'    => [
                 'items'      => $this->collection,
                 'pagination' => [
