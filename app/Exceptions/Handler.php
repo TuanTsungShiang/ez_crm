@@ -2,9 +2,12 @@
 
 namespace App\Exceptions;
 
+use App\Enums\ApiCode;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -30,10 +33,37 @@ class Handler extends ExceptionHandler
         });
     }
 
+    public function render($request, Throwable $e)
+    {
+        if ($request->is('api/*') || $request->expectsJson()) {
+            if ($e instanceof ModelNotFoundException) {
+                return response()->json([
+                    'success' => false,
+                    'code'    => ApiCode::NOT_FOUND,
+                    'message' => 'Resource not found',
+                ], 404);
+            }
+
+            if ($e instanceof NotFoundHttpException) {
+                return response()->json([
+                    'success' => false,
+                    'code'    => ApiCode::ENDPOINT_NOT_FOUND,
+                    'message' => 'Endpoint not found',
+                ], 404);
+            }
+        }
+
+        return parent::render($request, $e);
+    }
+
     protected function unauthenticated($request, AuthenticationException $exception)
     {
         if ($request->is('api/*') || $request->expectsJson()) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+            return response()->json([
+                'success' => false,
+                'code'    => ApiCode::NO_TOKEN,
+                'message' => 'Unauthenticated.',
+            ], 401);
         }
 
         return redirect()->guest($exception->redirectTo() ?? route('login'));

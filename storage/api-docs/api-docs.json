@@ -173,16 +173,16 @@
                                             "type": "boolean",
                                             "example": true
                                         },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "S200"
+                                        },
                                         "data": {
                                             "properties": {
                                                 "items": {
                                                     "type": "array",
                                                     "items": {
                                                         "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
                                                             "uuid": {
                                                                 "type": "string",
                                                                 "example": "550e8400-e29b-41d4-a716-446655440000"
@@ -209,10 +209,6 @@
                                                             },
                                                             "group": {
                                                                 "properties": {
-                                                                    "id": {
-                                                                        "type": "integer",
-                                                                        "example": 1
-                                                                    },
                                                                     "name": {
                                                                         "type": "string",
                                                                         "example": "VIP"
@@ -224,10 +220,6 @@
                                                                 "type": "array",
                                                                 "items": {
                                                                     "properties": {
-                                                                        "id": {
-                                                                            "type": "integer",
-                                                                            "example": 1
-                                                                        },
                                                                         "name": {
                                                                             "type": "string",
                                                                             "example": "活躍"
@@ -313,6 +305,238 @@
                                         "success": {
                                             "type": "boolean",
                                             "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Members"
+                ],
+                "summary": "建立會員",
+                "description": "CRM 管理員手動新增會員，email 與 phone 至少填一個",
+                "operationId": "createMember",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "真實姓名，必填",
+                                        "type": "string",
+                                        "example": "王小明"
+                                    },
+                                    "nickname": {
+                                        "description": "暱稱",
+                                        "type": "string",
+                                        "example": "Ming"
+                                    },
+                                    "email": {
+                                        "description": "Email，與 phone 至少填一個",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "ming@example.com"
+                                    },
+                                    "phone": {
+                                        "description": "手機，與 email 至少填一個",
+                                        "type": "string",
+                                        "example": "0912345678"
+                                    },
+                                    "password": {
+                                        "description": "密碼，min 8，不填則不設密碼",
+                                        "type": "string",
+                                        "example": "password123"
+                                    },
+                                    "status": {
+                                        "description": "0=停用 1=正常 2=待驗證，預設 1",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "group_id": {
+                                        "description": "會員群組 ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "tag_ids": {
+                                        "description": "標籤 ID 陣列",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2
+                                        ]
+                                    },
+                                    "profile": {
+                                        "properties": {
+                                            "gender": {
+                                                "description": "0=不提供 1=男 2=女",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "birthday": {
+                                                "description": "生日 Y-m-d",
+                                                "type": "string",
+                                                "format": "date",
+                                                "example": "1990-05-15"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "建立成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "S201"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "王小明"
+                                                },
+                                                "nickname": {
+                                                    "type": "string",
+                                                    "example": "Ming"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "ming@example.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "0912345678"
+                                                },
+                                                "status": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "group": {
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "一般會員"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "tags": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "潛力客"
+                                                            },
+                                                            "color": {
+                                                                "type": "string",
+                                                                "example": "#3B82F6"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "has_sns": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "last_login_at": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-14T10:00:00+00:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未認證",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "A001"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "驗證失敗",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "V001"
                                         },
                                         "message": {
                                             "type": "string",

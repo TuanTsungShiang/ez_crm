@@ -42,13 +42,13 @@ class MemberSearchTest extends TestCase
 
         $response->assertStatus(200)
                  ->assertJsonStructure([
-                     'success',
+                     'success', 'code',
                      'data' => [
                          'items' => [['uuid', 'name', 'email', 'status', 'group', 'tags', 'has_sns', 'created_at']],
                          'pagination' => ['total', 'per_page', 'current_page', 'last_page'],
                      ],
                  ])
-                 ->assertJson(['success' => true]);
+                 ->assertJson(['success' => true, 'code' => 'S200']);
     }
 
     // ---- keyword 搜尋 ----

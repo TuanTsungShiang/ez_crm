@@ -23,4 +23,5 @@ Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
         Route::get('members', [MemberController::class, 'search']);
+        Route::post('members', [MemberController::class, 'store']);
     });
