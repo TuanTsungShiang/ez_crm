@@ -24,4 +24,7 @@ Route::prefix('v1')
     ->group(function () {
         Route::get('members', [MemberController::class, 'search']);
         Route::post('members', [MemberController::class, 'store']);
+        Route::get('members/{member:uuid}', [MemberController::class, 'show']);
+        Route::put('members/{member:uuid}', [MemberController::class, 'update']);
+        Route::delete('members/{member:uuid}', [MemberController::class, 'destroy']);
     });
