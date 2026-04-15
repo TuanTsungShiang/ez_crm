@@ -1,0 +1,331 @@
+diff --git a/app/Services/MemberSearchService.php b/app/Services/MemberSearchService.php
+index c28bdb5..5b7f988 100644
+--- a/app/Services/MemberSearchService.php
++++ b/app/Services/MemberSearchService.php
+@@ -3,6 +3,7 @@
+ namespace App\Services;
+ 
+ use App\Models\Member;
++use Illuminate\Database\Eloquent\Builder;
+ use Illuminate\Pagination\LengthAwarePaginator;
+ 
+ class MemberSearchService
+@@ -16,14 +17,14 @@ public function search(array $params): LengthAwarePaginator
+         $this->applyKeyword($query, $params['keyword'] ?? null);
+         $this->applyFilters($query, $params);
+ 
+-        $sortBy  = $params['sort_by'] ?? 'created_at';
+-        $sortDir = $params['sort_dir'] ?? 'desc';
++        $sortBy  = $this->resolveSortBy($params['sort_by'] ?? null);
++        $sortDir = $this->resolveSortDir($params['sort_dir'] ?? null);
+         $query->orderBy($sortBy, $sortDir);
+ 
+         return $query->paginate($params['per_page'] ?? 15);
+     }
+ 
+-    private function applyKeyword($query, ?string $keyword): void
++    private function applyKeyword(Builder $query, ?string $keyword): void
+     {
+         if (!$keyword) {
+             return;
+@@ -37,7 +38,7 @@ private function applyKeyword($query, ?string $keyword): void
+         });
+     }
+ 
+-    private function applyFilters($query, array $params): void
++    private function applyFilters(Builder $query, array $params): void
+     {
+         if (isset($params['status'])) {
+             $query->where('status', $params['status']);
+@@ -48,9 +49,7 @@ private function applyFilters($query, array $params): void
+         }
+ 
+         if (!empty($params['tag_ids'])) {
+-            foreach ($params['tag_ids'] as $tagId) {
+-                $query->whereHas('tags', fn($q) => $q->where('tags.id', $tagId));
+-            }
++            $this->applyTagFilters($query, $params['tag_ids']);
+         }
+ 
+         if (isset($params['gender'])) {
+@@ -71,4 +70,29 @@ private function applyFilters($query, array $params): void
+             $query->whereDate('created_at', '<=', $params['created_to']);
+         }
+     }
++
++    private function applyTagFilters(Builder $query, array $tagIds): void
++    {
++        $tagIds = array_values(array_unique($tagIds));
++
++        $query->whereIn('members.id', function ($sub) use ($tagIds) {
++            $sub->select('member_id')
++                ->from('member_tag')
++                ->whereIn('tag_id', $tagIds)
++                ->groupBy('member_id')
++                ->havingRaw('COUNT(DISTINCT tag_id) = ?', [count($tagIds)]);
++        });
++    }
++
++    private function resolveSortBy(?string $sortBy): string
++    {
++        $allowedSorts = ['created_at', 'last_login_at', 'name'];
++
++        return in_array($sortBy, $allowedSorts, true) ? $sortBy : 'created_at';
++    }
++
++    private function resolveSortDir(?string $sortDir): string
++    {
++        return $sortDir === 'asc' ? 'asc' : 'desc';
++    }
+ }
+diff --git a/database/migrations/2026_04_02_140000_add_search_indexes_to_members_and_member_tag_tables.php b/database/migrations/2026_04_02_140000_add_search_indexes_to_members_and_member_tag_tables.php
+new file mode 100644
+index 0000000..819f769
+--- /dev/null
++++ b/database/migrations/2026_04_02_140000_add_search_indexes_to_members_and_member_tag_tables.php
+@@ -0,0 +1,36 @@
++<?php
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++
++return new class extends Migration
++{
++    /**
++     * Run the migrations.
++     */
++    public function up(): void
++    {
++        Schema::table('members', function (Blueprint $table) {
++            $table->index('status');
++            $table->index('created_at');
++            $table->index('last_login_at');
++        });
++
++        Schema::table('member_tag', function (Blueprint $table) {
++            $table->index('tag_id');
++        });
++    }
++
++    /**
++     * Reverse the migrations.
++     */
++    public function down(): void
++    {
++        Schema::table('members', function (Blueprint $table) {
++            $table->dropIndex(['status']);
++            $table->dropIndex(['created_at']);
++            $table->dropIndex(['last_login_at']);
++        });
++
++        Schema::table('member_tag', function (Blueprint $table) {
++            $table->dropIndex(['tag_id']);
++        });
++    }
++};
+diff --git a/tests/Feature/Api/V1/MemberSearchTest.php b/tests/Feature/Api/V1/MemberSearchTest.php
+index 2db2e2b..8d09a08 100644
+--- a/tests/Feature/Api/V1/MemberSearchTest.php
++++ b/tests/Feature/Api/V1/MemberSearchTest.php
+@@ -7,6 +7,7 @@
+ use App\Models\MemberProfile;
+ use App\Models\MemberSns;
+ use App\Models\Tag;
++use App\Models\User;
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ use Illuminate\Support\Str;
+ use Tests\TestCase;
+@@ -20,11 +21,21 @@ class MemberSearchTest extends TestCase
+     protected function setUp(): void
+     {
+         parent::setUp();
++        $this->actingAs(User::factory()->create());
+         $this->seedBaseData();
+     }
+ 
+     // ---- 基本結構 ----
+ 
++    public function test_requires_authentication(): void
++    {
++        $this->app['auth']->forgetGuards();
++
++        $response = $this->getJson($this->endpoint);
++
++        $response->assertStatus(401);
++    }
++
+     public function test_returns_success_response_structure(): void
+     {
+         $response = $this->getJson($this->endpoint);
+@@ -159,6 +170,78 @@ public function test_validation_fails_when_created_to_before_created_from(): voi
+ 
+     // ---- 輔助：建立測試資料 ----
+ 
++    public function test_filter_by_tag_ids_requires_members_to_match_all_tags(): void
++    {
++        $tagA = Tag::create(['name' => 'TagA', 'color' => '#111111']);
++        $tagB = Tag::create(['name' => 'TagB', 'color' => '#222222']);
++
++        $memberWithAllTags = Member::create([
++            'uuid'     => Str::uuid(),
++            'name'     => 'All Tags',
++            'email'    => 'all-tags@example.com',
++            'password' => bcrypt('password'),
++            'status'   => 1,
++        ]);
++
++        $memberWithPartialTags = Member::create([
++            'uuid'     => Str::uuid(),
++            'name'     => 'Partial Tags',
++            'email'    => 'partial-tags@example.com',
++            'password' => bcrypt('password'),
++            'status'   => 1,
++        ]);
++
++        $memberWithAllTags->tags()->attach([$tagA->id, $tagB->id]);
++        $memberWithPartialTags->tags()->attach([$tagA->id]);
++
++        $response = $this->getJson($this->endpoint.'?'.http_build_query([
++            'tag_ids'  => [$tagA->id, $tagB->id],
++            'per_page' => 15,
++        ]));
++
++        $response->assertStatus(200);
++        $this->assertEquals(1, $response->json('data.pagination.total'));
++        $this->assertEquals($memberWithAllTags->id, $response->json('data.items.0.id'));
++    }
++
++    public function test_filter_by_tag_ids_ignores_duplicate_values(): void
++    {
++        $tagA = Tag::create(['name' => 'DupTagA', 'color' => '#333333']);
++        $tagB = Tag::create(['name' => 'DupTagB', 'color' => '#444444']);
++
++        $member = Member::create([
++            'uuid'     => Str::uuid(),
++            'name'     => 'Duplicate Tag Match',
++            'email'    => 'duplicate-tag-match@example.com',
++            'password' => bcrypt('password'),
++            'status'   => 1,
++        ]);
++
++        $member->tags()->attach([$tagA->id, $tagB->id]);
++
++        $uniqueResponse = $this->getJson($this->endpoint.'?'.http_build_query([
++            'tag_ids'  => [$tagA->id, $tagB->id],
++            'per_page' => 15,
++        ]));
++
++        $duplicateResponse = $this->getJson($this->endpoint.'?'.http_build_query([
++            'tag_ids'  => [$tagA->id, $tagA->id, $tagB->id],
++            'per_page' => 15,
++        ]));
++
++        $uniqueResponse->assertStatus(200);
++        $duplicateResponse->assertStatus(200);
++
++        $this->assertEquals(
++            $uniqueResponse->json('data.pagination.total'),
++            $duplicateResponse->json('data.pagination.total')
++        );
++        $this->assertEquals(
++            $uniqueResponse->json('data.items.0.id'),
++            $duplicateResponse->json('data.items.0.id')
++        );
++    }
++
+     private function seedBaseData(): void
+     {
+         $group = MemberGroup::create(['name' => '一般會員', 'sort_order' => 1]);
+diff --git a/tests/Unit/Services/MemberSearchServiceTest.php b/tests/Unit/Services/MemberSearchServiceTest.php
+new file mode 100644
+index 0000000..2ff5761
+--- /dev/null
++++ b/tests/Unit/Services/MemberSearchServiceTest.php
+@@ -0,0 +1,83 @@
++<?php
++
++namespace Tests\Unit\Services;
++
++use App\Models\Member;
++use App\Services\MemberSearchService;
++use Illuminate\Foundation\Testing\RefreshDatabase;
++use Illuminate\Support\Carbon;
++use Illuminate\Support\Str;
++use Tests\TestCase;
++
++class MemberSearchServiceTest extends TestCase
++{
++    use RefreshDatabase;
++
++    public function test_invalid_sort_by_falls_back_to_created_at(): void
++    {
++        $older = $this->createMember('Older', 'older@example.com', '2026-01-01 00:00:00', '2026-01-02 00:00:00');
++        $newer = $this->createMember('Newer', 'newer@example.com', '2026-03-01 00:00:00', '2026-03-02 00:00:00');
++
++        $result = app(MemberSearchService::class)->search([
++            'sort_by'  => 'invalid_column',
++            'per_page' => 15,
++        ]);
++
++        $items = $result->items();
++
++        $this->assertSame($newer->id, $items[0]->id);
++        $this->assertSame($older->id, $items[1]->id);
++    }
++
++    public function test_invalid_sort_dir_falls_back_to_desc(): void
++    {
++        $older = $this->createMember('Alpha', 'alpha@example.com', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
++        $newer = $this->createMember('Beta', 'beta@example.com', '2026-04-01 00:00:00', '2026-04-01 00:00:00');
++
++        $result = app(MemberSearchService::class)->search([
++            'sort_dir' => 'sideways',
++            'per_page' => 15,
++        ]);
++
++        $items = $result->items();
++
++        $this->assertSame($newer->id, $items[0]->id);
++        $this->assertSame($older->id, $items[1]->id);
++    }
++
++    public function test_valid_sort_by_and_sort_dir_still_work(): void
++    {
++        $alpha = $this->createMember('Alpha', 'alpha@example.com', '2026-02-01 00:00:00', '2026-02-01 00:00:00');
++        $beta = $this->createMember('Beta', 'beta@example.com', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
++
++        $result = app(MemberSearchService::class)->search([
++            'sort_by'  => 'name',
++            'sort_dir' => 'asc',
++            'per_page' => 15,
++        ]);
++
++        $items = $result->items();
++
++        $this->assertSame($alpha->id, $items[0]->id);
++        $this->assertSame($beta->id, $items[1]->id);
++    }
++
++    private function createMember(string $name, string $email, string $createdAt, string $lastLoginAt): Member
++    {
++        $createdAt = Carbon::parse($createdAt);
++        $lastLoginAt = Carbon::parse($lastLoginAt);
++
++        $member = Member::create([
++            'uuid'     => (string) Str::uuid(),
++            'name'     => $name,
++            'email'    => $email,
++            'password' => bcrypt('password'),
++            'status'   => 1,
++        ]);
++
++        $member->forceFill([
++            'created_at'    => $createdAt,
++            'updated_at'    => $createdAt,
++            'last_login_at' => $lastLoginAt,
++        ])->saveQuietly();
++
++        return $member->fresh();
++    }
++}

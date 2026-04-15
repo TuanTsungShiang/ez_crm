@@ -2,18 +2,8 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class MemberSearchRequest extends FormRequest
+class MemberSearchRequest extends BaseApiRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return $this->user() !== null;
-    }
-
     public function rules(): array
     {
         return [
@@ -31,16 +21,5 @@ class MemberSearchRequest extends FormRequest
             'sort_by'      => ['nullable', 'string', 'in:created_at,last_login_at,name'],
             'sort_dir'     => ['nullable', 'string', 'in:asc,desc'],
         ];
-    }
-
-    public function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
-    {
-        throw new \Illuminate\Http\Exceptions\HttpResponseException(
-            response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors'  => $validator->errors(),
-            ], 422)
-        );
     }
 }

@@ -16,7 +16,7 @@ class MemberSearchTest extends TestCase
 {
     use RefreshDatabase;
 
-    private string $endpoint = '/api/v1/members/search';
+    private string $endpoint = '/api/v1/members';
 
     protected function setUp(): void
     {
@@ -42,13 +42,13 @@ class MemberSearchTest extends TestCase
 
         $response->assertStatus(200)
                  ->assertJsonStructure([
-                     'success',
+                     'success', 'code',
                      'data' => [
-                         'items' => [['id', 'uuid', 'name', 'email', 'status', 'group', 'tags', 'has_sns', 'created_at']],
+                         'items' => [['uuid', 'name', 'email', 'status', 'group', 'tags', 'has_sns', 'created_at']],
                          'pagination' => ['total', 'per_page', 'current_page', 'last_page'],
                      ],
                  ])
-                 ->assertJson(['success' => true]);
+                 ->assertJson(['success' => true, 'code' => 'S200']);
     }
 
     // ---- keyword 搜尋 ----
@@ -169,6 +169,78 @@ class MemberSearchTest extends TestCase
     }
 
     // ---- 輔助：建立測試資料 ----
+
+    public function test_filter_by_tag_ids_requires_members_to_match_all_tags(): void
+    {
+        $tagA = Tag::create(['name' => 'TagA', 'color' => '#111111']);
+        $tagB = Tag::create(['name' => 'TagB', 'color' => '#222222']);
+
+        $memberWithAllTags = Member::create([
+            'uuid'     => Str::uuid(),
+            'name'     => 'All Tags',
+            'email'    => 'all-tags@example.com',
+            'password' => bcrypt('password'),
+            'status'   => 1,
+        ]);
+
+        $memberWithPartialTags = Member::create([
+            'uuid'     => Str::uuid(),
+            'name'     => 'Partial Tags',
+            'email'    => 'partial-tags@example.com',
+            'password' => bcrypt('password'),
+            'status'   => 1,
+        ]);
+
+        $memberWithAllTags->tags()->attach([$tagA->id, $tagB->id]);
+        $memberWithPartialTags->tags()->attach([$tagA->id]);
+
+        $response = $this->getJson($this->endpoint.'?'.http_build_query([
+            'tag_ids'  => [$tagA->id, $tagB->id],
+            'per_page' => 15,
+        ]));
+
+        $response->assertStatus(200);
+        $this->assertEquals(1, $response->json('data.pagination.total'));
+        $this->assertEquals($memberWithAllTags->uuid, $response->json('data.items.0.uuid'));
+    }
+
+    public function test_filter_by_tag_ids_ignores_duplicate_values(): void
+    {
+        $tagA = Tag::create(['name' => 'DupTagA', 'color' => '#333333']);
+        $tagB = Tag::create(['name' => 'DupTagB', 'color' => '#444444']);
+
+        $member = Member::create([
+            'uuid'     => Str::uuid(),
+            'name'     => 'Duplicate Tag Match',
+            'email'    => 'duplicate-tag-match@example.com',
+            'password' => bcrypt('password'),
+            'status'   => 1,
+        ]);
+
+        $member->tags()->attach([$tagA->id, $tagB->id]);
+
+        $uniqueResponse = $this->getJson($this->endpoint.'?'.http_build_query([
+            'tag_ids'  => [$tagA->id, $tagB->id],
+            'per_page' => 15,
+        ]));
+
+        $duplicateResponse = $this->getJson($this->endpoint.'?'.http_build_query([
+            'tag_ids'  => [$tagA->id, $tagA->id, $tagB->id],
+            'per_page' => 15,
+        ]));
+
+        $uniqueResponse->assertStatus(200);
+        $duplicateResponse->assertStatus(200);
+
+        $this->assertEquals(
+            $uniqueResponse->json('data.pagination.total'),
+            $duplicateResponse->json('data.pagination.total')
+        );
+        $this->assertEquals(
+            $uniqueResponse->json('data.items.0.uuid'),
+            $duplicateResponse->json('data.items.0.uuid')
+        );
+    }
 
     private function seedBaseData(): void
     {

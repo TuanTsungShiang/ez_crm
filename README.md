@@ -1,11 +1,13 @@
 # ez_crm
 
-`ez_crm` 是一個以 Laravel 10 為基礎的早期 CRM / 會員管理專案，現階段重點放在會員資料模型、會員搜尋 API，以及後續 CRM 功能擴充所需的資料結構。
+> **版本：v1.0.0**
+> 詳細變更紀錄見 [CHANGELOG.md](CHANGELOG.md)
 
-目前專案仍在開發前期與測試階段，核心方向已成形，但功能尚未完整，適合用來持續打底會員中心、標籤管理、分群搜尋與未來的後台管理能力。
+`ez_crm` 是一個以 Laravel 10 為基礎的 CRM / 會員管理系統，採 RESTful API 架構，支援完整的會員 CRUD、標籤分群、第三方登入整合等功能。
 
-## 目前已完成
+## 目前已完成（v1.0.0）
 
+- 會員完整 CRUD API（Search / Create / Show / Update / Delete）
 - 會員核心資料表與 Model
 - 會員群組 `member_groups`
 - 標籤 `tags` 與 `member_tag` 關聯

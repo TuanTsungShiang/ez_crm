@@ -22,5 +22,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
-        Route::get('members/search', [MemberController::class, 'search']);
+        Route::get('members', [MemberController::class, 'search']);
+        Route::post('members', [MemberController::class, 'store']);
+        Route::get('members/{member:uuid}', [MemberController::class, 'show']);
+        Route::put('members/{member:uuid}', [MemberController::class, 'update']);
+        Route::delete('members/{member:uuid}', [MemberController::class, 'destroy']);
     });
