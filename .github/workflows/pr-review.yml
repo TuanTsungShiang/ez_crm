@@ -20,122 +20,122 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-          const marker = '<!-- codex-pr-review -->';
-          const pr = context.payload.pull_request;
-          if (!pr) {
-            core.setFailed('This workflow only supports pull_request events.');
-            return;
-          }
-
-          const apiKey = process.env.OPENAI_API_KEY;
-          if (!apiKey) {
-            core.setFailed('Missing OPENAI_API_KEY secret.');
-            return;
-          }
-
-          const files = await github.paginate(
-            github.rest.pulls.listFiles,
-            {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number,
-              per_page: 100
+            const marker = '<!-- codex-pr-review -->';
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.setFailed('This workflow only supports pull_request events.');
+              return;
             }
-          );
 
-          const MAX_CHARS = 120000;
-          let diffText = '';
-          for (const file of files) {
-            const patch = file.patch || '[binary or too large for patch]';
-            const chunk = [
-              `File: ${file.filename}`,
-              `Status: ${file.status}`,
-              `+${file.additions} -${file.deletions}`,
-              'Patch:',
-              patch,
-              '---'
+            const apiKey = process.env.OPENAI_API_KEY;
+            if (!apiKey) {
+              core.setFailed('Missing OPENAI_API_KEY secret.');
+              return;
+            }
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                per_page: 100
+              }
+            );
+
+            const MAX_CHARS = 120000;
+            let diffText = '';
+            for (const file of files) {
+              const patch = file.patch || '[binary or too large for patch]';
+              const chunk = [
+                `File: ${file.filename}`,
+                `Status: ${file.status}`,
+                `+${file.additions} -${file.deletions}`,
+                'Patch:',
+                patch,
+                '---'
+              ].join('\n');
+
+              if ((diffText + chunk).length > MAX_CHARS) {
+                diffText += '\n[Diff truncated because PR is large]\n';
+                break;
+              }
+              diffText += chunk + '\n';
+            }
+
+            if (!diffText.trim()) {
+              diffText = 'No textual diff found.';
+            }
+
+            const model = process.env.OPENAI_MODEL;
+            const prompt = [
+              'Please review this GitHub Pull Request diff.',
+              'Focus on:',
+              '1) Bugs / logic risks',
+              '2) Security concerns',
+              '3) Performance pitfalls',
+              '4) Missing tests or edge cases',
+              '',
+              'Output in Traditional Chinese with this format:',
+              '- Summary',
+              '- Major issues (if any)',
+              '- Suggestions',
+              '- Risk level (Low/Medium/High)',
+              '',
+              'Be concrete and quote file names.'
             ].join('\n');
 
-            if ((diffText + chunk).length > MAX_CHARS) {
-              diffText += '\n[Diff truncated because PR is large]\n';
-              break;
-            }
-            diffText += chunk + '\n';
-          }
-
-          if (!diffText.trim()) {
-            diffText = 'No textual diff found.';
-          }
-
-          const model = process.env.OPENAI_MODEL;
-          const prompt = [
-            'Please review this GitHub Pull Request diff.',
-            'Focus on:',
-            '1) Bugs / logic risks',
-            '2) Security concerns',
-            '3) Performance pitfalls',
-            '4) Missing tests or edge cases',
-            '',
-            'Output in Traditional Chinese with this format:',
-            '- Summary',
-            '- Major issues (if any)',
-            '- Suggestions',
-            '- Risk level (Low/Medium/High)',
-            '',
-            'Be concrete and quote file names.'
-          ].join('\n');
-
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-              model,
-              temperature: 0.2,
-              messages: [
-                { role: 'system', content: 'You are a senior code reviewer.' },
-                { role: 'user', content: `${prompt}\n\nPR title: ${pr.title}\n\n${diffText}` }
-              ]
-            })
-          });
-
-          if (!response.ok) {
-            const text = await response.text();
-            core.setFailed(`OpenAI request failed: ${response.status} ${text}`);
-            return;
-          }
-
-          const data = await response.json();
-          const review = data?.choices?.[0]?.message?.content?.trim() || 'No review content returned.';
-          const body = [
-            marker,
-            '## AI PR Review',
-            '',
-            review
-          ].join('\n');
-
-          const existing = await github.paginate(github.rest.issues.listComments, {
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: pr.number,
-            per_page: 100
-          });
-
-          const botComment = existing.find(c => c.user?.type === 'Bot' && c.body?.includes(marker));
-          if (botComment) {
-            await github.rest.issues.updateComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: botComment.id,
-              body
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${apiKey}`
+              },
+              body: JSON.stringify({
+                model,
+                temperature: 0.2,
+                messages: [
+                  { role: 'system', content: 'You are a senior code reviewer.' },
+                  { role: 'user', content: `${prompt}\n\nPR title: ${pr.title}\n\n${diffText}` }
+                ]
+              })
             });
-          } else {
-            await github.rest.issues.createComment({
+
+            if (!response.ok) {
+              const text = await response.text();
+              core.setFailed(`OpenAI request failed: ${response.status} ${text}`);
+              return;
+            }
+
+            const data = await response.json();
+            const review = data?.choices?.[0]?.message?.content?.trim() || 'No review content returned.';
+            const body = [
+              marker,
+              '## AI PR Review',
+              '',
+              review
+            ].join('\n');
+
+            const existing = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pr.number,
-              body
+              per_page: 100
             });
-          }
+
+            const botComment = existing.find(c => c.user?.type === 'Bot' && c.body?.includes(marker));
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body
+              });
+            }
