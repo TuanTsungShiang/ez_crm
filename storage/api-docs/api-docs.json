@@ -558,6 +558,444 @@
                     }
                 ]
             }
+        },
+        "/members/{uuid}": {
+            "get": {
+                "tags": [
+                    "Members"
+                ],
+                "summary": "查看單一會員",
+                "description": "取得單一會員詳細資料，含 profile、tags、sns、驗證狀態等",
+                "operationId": "showMember",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "會員 UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "查詢成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "S200"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "王小明"
+                                                },
+                                                "nickname": {
+                                                    "type": "string",
+                                                    "example": "Ming"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "ming@example.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "0912345678"
+                                                },
+                                                "status": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "email_verified_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "phone_verified_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "group": {
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "一般會員"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "tags": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "潛力客"
+                                                            },
+                                                            "color": {
+                                                                "type": "string",
+                                                                "example": "#3B82F6"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "profile": {
+                                                    "properties": {
+                                                        "avatar": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "gender": {
+                                                            "type": "integer",
+                                                            "example": 1,
+                                                            "nullable": true
+                                                        },
+                                                        "birthday": {
+                                                            "type": "string",
+                                                            "format": "date",
+                                                            "example": "1990-05-15",
+                                                            "nullable": true
+                                                        },
+                                                        "bio": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "language": {
+                                                            "type": "string",
+                                                            "example": "zh-TW",
+                                                            "nullable": true
+                                                        },
+                                                        "timezone": {
+                                                            "type": "string",
+                                                            "example": "Asia/Taipei",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "sns": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "provider": {
+                                                                "type": "string",
+                                                                "example": "google"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "has_sns": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "last_login_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未認證",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "A001"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "會員不存在",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "N001"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Resource not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Members"
+                ],
+                "summary": "更新會員",
+                "description": "部分更新會員資料（沒傳的欄位不動）。更新 email/phone 會自動清空對應 verified_at。tag_ids 採 sync 語意。",
+                "operationId": "updateMember",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "會員 UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "王小明"
+                                    },
+                                    "nickname": {
+                                        "type": "string",
+                                        "example": "Ming",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "ming@example.com",
+                                        "nullable": true
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0912345678",
+                                        "nullable": true
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "newpassword123",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "group_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "tag_ids": {
+                                        "description": "sync 語意：傳了就完整覆蓋，不傳不動，[] 代表清空",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2
+                                        ]
+                                    },
+                                    "profile": {
+                                        "properties": {
+                                            "gender": {
+                                                "type": "integer",
+                                                "nullable": true
+                                            },
+                                            "birthday": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "nullable": true
+                                            },
+                                            "bio": {
+                                                "type": "string",
+                                                "nullable": true
+                                            },
+                                            "avatar": {
+                                                "type": "string",
+                                                "nullable": true
+                                            },
+                                            "language": {
+                                                "type": "string",
+                                                "nullable": true
+                                            },
+                                            "timezone": {
+                                                "type": "string",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "更新成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "S200"
+                                        },
+                                        "data": {
+                                            "description": "MemberDetailResource",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未認證"
+                    },
+                    "404": {
+                        "description": "會員不存在"
+                    },
+                    "422": {
+                        "description": "驗證失敗"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Members"
+                ],
+                "summary": "刪除會員",
+                "description": "軟刪除會員。被刪除的會員不會出現在 Search / Show，關聯資料保留不動。",
+                "operationId": "deleteMember",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "會員 UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "刪除成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "S200"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "deleted_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-04-15T10:00:00+00:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未認證"
+                    },
+                    "404": {
+                        "description": "會員不存在"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {

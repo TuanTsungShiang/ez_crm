@@ -6,11 +6,15 @@ use App\Enums\ApiCode;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\MemberCreateRequest;
 use App\Http\Requests\Api\V1\MemberSearchRequest;
+use App\Http\Requests\Api\V1\MemberUpdateRequest;
 use App\Http\Resources\Api\V1\MemberCollection;
+use App\Http\Resources\Api\V1\MemberDetailResource;
 use App\Http\Resources\Api\V1\MemberResource;
 use App\Http\Traits\ApiResponse;
+use App\Models\Member;
 use App\Services\MemberCreateService;
 use App\Services\MemberSearchService;
+use App\Services\MemberUpdateService;
 
 class MemberController extends Controller
 {
@@ -19,6 +23,7 @@ class MemberController extends Controller
     public function __construct(
         private MemberSearchService $searchService,
         private MemberCreateService $createService,
+        private MemberUpdateService $updateService,
     ) {}
 
     /**
@@ -188,5 +193,176 @@ class MemberController extends Controller
         $member = $this->createService->create($request->validated());
 
         return $this->created(new MemberResource($member));
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/members/{uuid}",
+     *     operationId="showMember",
+     *     tags={"Members"},
+     *     summary="查看單一會員",
+     *     description="取得單一會員詳細資料，含 profile、tags、sns、驗證狀態等",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="uuid", in="path", required=true, description="會員 UUID", @OA\Schema(type="string", format="uuid")),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="查詢成功",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="code",    type="string",  example="S200"),
+     *             @OA\Property(property="data",    type="object",
+     *                 @OA\Property(property="uuid",              type="string",  example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="name",              type="string",  example="王小明"),
+     *                 @OA\Property(property="nickname",          type="string",  example="Ming"),
+     *                 @OA\Property(property="email",             type="string",  example="ming@example.com"),
+     *                 @OA\Property(property="phone",             type="string",  example="0912345678"),
+     *                 @OA\Property(property="status",            type="integer", example=1),
+     *                 @OA\Property(property="email_verified_at", type="string",  nullable=true, format="date-time"),
+     *                 @OA\Property(property="phone_verified_at", type="string",  nullable=true, format="date-time"),
+     *                 @OA\Property(property="group", type="object",
+     *                     @OA\Property(property="name", type="string", example="一般會員")
+     *                 ),
+     *                 @OA\Property(property="tags", type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="name",  type="string", example="潛力客"),
+     *                         @OA\Property(property="color", type="string", example="#3B82F6")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="profile", type="object",
+     *                     @OA\Property(property="avatar",   type="string",  nullable=true),
+     *                     @OA\Property(property="gender",   type="integer", nullable=true, example=1),
+     *                     @OA\Property(property="birthday", type="string",  nullable=true, format="date", example="1990-05-15"),
+     *                     @OA\Property(property="bio",      type="string",  nullable=true),
+     *                     @OA\Property(property="language", type="string",  nullable=true, example="zh-TW"),
+     *                     @OA\Property(property="timezone", type="string",  nullable=true, example="Asia/Taipei")
+     *                 ),
+     *                 @OA\Property(property="sns", type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="provider", type="string", example="google")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="has_sns",       type="boolean", example=true),
+     *                 @OA\Property(property="last_login_at", type="string",  nullable=true, format="date-time"),
+     *                 @OA\Property(property="created_at",    type="string",  format="date-time"),
+     *                 @OA\Property(property="updated_at",    type="string",  format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="未認證",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="code",    type="string",  example="A001"),
+     *             @OA\Property(property="message", type="string",  example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="會員不存在",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="code",    type="string",  example="N001"),
+     *             @OA\Property(property="message", type="string",  example="Resource not found")
+     *         )
+     *     )
+     * )
+     */
+    public function show(Member $member)
+    {
+        $member->load(['group', 'tags', 'profile', 'sns'])->loadCount('sns');
+
+        return $this->success(new MemberDetailResource($member));
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/members/{uuid}",
+     *     operationId="updateMember",
+     *     tags={"Members"},
+     *     summary="更新會員",
+     *     description="部分更新會員資料（沒傳的欄位不動）。更新 email/phone 會自動清空對應 verified_at。tag_ids 採 sync 語意。",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="uuid", in="path", required=true, description="會員 UUID", @OA\Schema(type="string", format="uuid")),
+     *
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name",             type="string",  example="王小明"),
+     *             @OA\Property(property="nickname",         type="string",  nullable=true, example="Ming"),
+     *             @OA\Property(property="email",            type="string",  format="email", nullable=true, example="ming@example.com"),
+     *             @OA\Property(property="phone",            type="string",  nullable=true, example="0912345678"),
+     *             @OA\Property(property="password",         type="string",  nullable=true, example="newpassword123"),
+     *             @OA\Property(property="status",           type="integer", example=1),
+     *             @OA\Property(property="group_id",         type="integer", nullable=true, example=1),
+     *             @OA\Property(property="tag_ids",          type="array",   @OA\Items(type="integer"), example={1,2}, description="sync 語意：傳了就完整覆蓋，不傳不動，[] 代表清空"),
+     *             @OA\Property(property="profile",          type="object",
+     *                 @OA\Property(property="gender",   type="integer", nullable=true),
+     *                 @OA\Property(property="birthday", type="string",  nullable=true, format="date"),
+     *                 @OA\Property(property="bio",      type="string",  nullable=true),
+     *                 @OA\Property(property="avatar",   type="string",  nullable=true),
+     *                 @OA\Property(property="language", type="string",  nullable=true),
+     *                 @OA\Property(property="timezone", type="string",  nullable=true)
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(response=200, description="更新成功",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="code",    type="string",  example="S200"),
+     *             @OA\Property(property="data",    type="object", description="MemberDetailResource")
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="未認證"),
+     *     @OA\Response(response=404, description="會員不存在"),
+     *     @OA\Response(response=422, description="驗證失敗")
+     * )
+     */
+    public function update(MemberUpdateRequest $request, Member $member)
+    {
+        $member = $this->updateService->update($member, $request->validated());
+
+        return $this->success(new MemberDetailResource($member));
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/members/{uuid}",
+     *     operationId="deleteMember",
+     *     tags={"Members"},
+     *     summary="刪除會員",
+     *     description="軟刪除會員。被刪除的會員不會出現在 Search / Show，關聯資料保留不動。",
+     *     security={{"sanctum":{}}},
+     *
+     *     @OA\Parameter(name="uuid", in="path", required=true, description="會員 UUID", @OA\Schema(type="string", format="uuid")),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="刪除成功",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="code",    type="string",  example="S200"),
+     *             @OA\Property(property="data",    type="object",
+     *                 @OA\Property(property="uuid",       type="string", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="deleted_at", type="string", format="date-time", example="2026-04-15T10:00:00+00:00")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="未認證"),
+     *     @OA\Response(response=404, description="會員不存在")
+     * )
+     */
+    public function destroy(Member $member)
+    {
+        $member->delete();
+
+        return $this->success([
+            'uuid'       => $member->uuid,
+            'deleted_at' => $member->deleted_at->toIso8601String(),
+        ]);
     }
 }
