@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\V1\GroupController;
 use App\Http\Controllers\Api\V1\MemberController;
+use App\Http\Controllers\Api\V1\TagController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,4 +29,10 @@ Route::prefix('v1')
         Route::get('members/{member:uuid}', [MemberController::class, 'show']);
         Route::put('members/{member:uuid}', [MemberController::class, 'update']);
         Route::delete('members/{member:uuid}', [MemberController::class, 'destroy']);
+
+        // Groups
+        Route::apiResource('groups', GroupController::class);
+
+        // Tags
+        Route::apiResource('tags', TagController::class);
     });
