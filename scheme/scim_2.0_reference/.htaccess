@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# 讓 Apache 把 Authorization header 傳給 PHP（預設會被吃掉）
+RewriteCond %{HTTP:Authorization} .+
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# 將 /scim_test/scim/v2/xxx 導向 scim.php
+RewriteRule ^scim/v2/(.*)$ scim.php/$1 [L,QSA]
