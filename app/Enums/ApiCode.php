@@ -20,6 +20,12 @@ class ApiCode
     const NO_TOKEN = 'A001';
     const TOKEN_EXPIRED = 'A002';
     const FORBIDDEN = 'A003';
+    const ACCOUNT_SUSPENDED = 'A004';
+    const EMAIL_NOT_VERIFIED = 'A005';
+    const ALREADY_VERIFIED = 'A006';
+    const INVALID_CODE = 'A007';
+    const THROTTLED = 'A008';
+    const INVALID_CREDENTIALS = 'A009';
 
     // N — 資源不存在類
     const NOT_FOUND = 'N001';
