@@ -115,4 +115,63 @@ class MeController extends Controller
 
         return $this->success(null);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/me/logout",
+     *     operationId="logout",
+     *     tags={"Me"},
+     *     summary="登出目前裝置",
+     *     description="只撤銷當前 request 使用的 token，其他裝置不受影響。",
+     *     security={{"member":{}}},
+     *     @OA\Response(response=200, description="登出成功"),
+     *     @OA\Response(response=401, description="未認證")
+     * )
+     */
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return $this->success(null);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/me/logout-all",
+     *     operationId="logoutAll",
+     *     tags={"Me"},
+     *     summary="登出所有裝置",
+     *     description="撤銷此會員名下所有 token（含當前）。",
+     *     security={{"member":{}}},
+     *     @OA\Response(response=200, description="已登出所有裝置"),
+     *     @OA\Response(response=401, description="未認證")
+     * )
+     */
+    public function logoutAll(Request $request)
+    {
+        $request->user()->tokens()->delete();
+
+        return $this->success(null);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/me",
+     *     operationId="destroyMe",
+     *     tags={"Me"},
+     *     summary="註銷自己的帳號",
+     *     description="會員自助刪除：軟刪除 + 撤銷所有 token。被註銷的會員 email/phone 仍佔用（避免立即被搶註），如需完全釋放由 admin 處理。",
+     *     security={{"member":{}}},
+     *     @OA\Response(response=200, description="帳號已註銷"),
+     *     @OA\Response(response=401, description="未認證")
+     * )
+     */
+    public function destroy(Request $request)
+    {
+        $member = $request->user();
+        $member->tokens()->delete();
+        $member->delete();
+
+        return $this->success(null);
+    }
 }

@@ -1084,6 +1084,27 @@
                         "member": []
                     }
                 ]
+            },
+            "delete": {
+                "tags": [
+                    "Me"
+                ],
+                "summary": "註銷自己的帳號",
+                "description": "會員自助刪除：軟刪除 + 撤銷所有 token。被註銷的會員 email/phone 仍佔用（避免立即被搶註），如需完全釋放由 admin 處理。",
+                "operationId": "destroyMe",
+                "responses": {
+                    "200": {
+                        "description": "帳號已註銷"
+                    },
+                    "401": {
+                        "description": "未認證"
+                    }
+                },
+                "security": [
+                    {
+                        "member": []
+                    }
+                ]
             }
         },
         "/me/password": {
@@ -1132,6 +1153,52 @@
                     },
                     "422": {
                         "description": "目前密碼錯誤或新密碼不合規則"
+                    }
+                },
+                "security": [
+                    {
+                        "member": []
+                    }
+                ]
+            }
+        },
+        "/me/logout": {
+            "post": {
+                "tags": [
+                    "Me"
+                ],
+                "summary": "登出目前裝置",
+                "description": "只撤銷當前 request 使用的 token，其他裝置不受影響。",
+                "operationId": "logout",
+                "responses": {
+                    "200": {
+                        "description": "登出成功"
+                    },
+                    "401": {
+                        "description": "未認證"
+                    }
+                },
+                "security": [
+                    {
+                        "member": []
+                    }
+                ]
+            }
+        },
+        "/me/logout-all": {
+            "post": {
+                "tags": [
+                    "Me"
+                ],
+                "summary": "登出所有裝置",
+                "description": "撤銷此會員名下所有 token（含當前）。",
+                "operationId": "logoutAll",
+                "responses": {
+                    "200": {
+                        "description": "已登出所有裝置"
+                    },
+                    "401": {
+                        "description": "未認證"
                     }
                 },
                 "security": [
