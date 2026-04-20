@@ -25,6 +25,7 @@ class ApiCode
     const ALREADY_VERIFIED = 'A006';
     const INVALID_CODE = 'A007';
     const THROTTLED = 'A008';
+    const INVALID_CREDENTIALS = 'A009';
 
     // N — 資源不存在類
     const NOT_FOUND = 'N001';
