@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Auth\SendEmailOtpController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\V1\GroupController;
+use App\Http\Controllers\Api\V1\Me\MeController;
 use App\Http\Controllers\Api\V1\MemberController;
 use App\Http\Controllers\Api\V1\TagController;
 use Illuminate\Http\Request;
@@ -38,6 +39,15 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('password/forgot', ForgotPasswordController::class);
     Route::post('password/reset', ResetPasswordController::class);
 });
+
+// 前台會員 /me 管理自己資料（需登入 member guard）
+Route::prefix('v1/me')
+    ->middleware('auth:member')
+    ->group(function () {
+        Route::get('/', [MeController::class, 'show']);
+        Route::put('/', [MeController::class, 'update']);
+        Route::put('password', [MeController::class, 'updatePassword']);
+    });
 
 Route::prefix('v1')
     ->middleware('auth:sanctum')
