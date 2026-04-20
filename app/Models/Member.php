@@ -12,9 +12,9 @@ class Member extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-    const STATUS_ACTIVE    = 1;
-    const STATUS_INACTIVE  = 0;
-    const STATUS_SUSPENDED = 2;
+    const STATUS_ACTIVE   = 1;
+    const STATUS_INACTIVE = 0;
+    const STATUS_PENDING  = 2;
 
     protected $fillable = [
         'uuid', 'member_group_id', 'name', 'nickname',

@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\RegisterSchemaController;
+use App\Http\Controllers\Api\V1\Auth\SendEmailOtpController;
+use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\V1\GroupController;
 use App\Http\Controllers\Api\V1\MemberController;
 use App\Http\Controllers\Api\V1\TagController;
@@ -25,6 +28,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // 前台會員 Auth API（不需登入）
 Route::prefix('v1/auth')->group(function () {
     Route::get('register/schema', RegisterSchemaController::class);
+    Route::post('register', RegisterController::class);
+    Route::post('verify/email/send', SendEmailOtpController::class);
+    Route::post('verify/email', VerifyEmailController::class);
 });
 
 Route::prefix('v1')
