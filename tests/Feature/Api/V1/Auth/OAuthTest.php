@@ -251,6 +251,42 @@ class OAuthTest extends TestCase
                  ->assertJson(['success' => false, 'code' => 'A010']);
     }
 
+    // ---- github provider (proves service is provider-agnostic) ----
+
+    public function test_github_callback_creates_member_and_binds_sns(): void
+    {
+        $this->mockSocialiteUser('github', $this->fakeSocialiteUser([
+            'id'       => 'github-uid-999',
+            'email'    => 'gh-user@example.com',
+            'name'     => 'GH User',
+            'nickname' => 'gh-handle',
+        ]));
+
+        $response = $this->getJson('/api/v1/auth/oauth/github/callback?code=fake');
+
+        $response->assertStatus(200)
+                 ->assertJson([
+                     'success' => true,
+                     'code'    => 'S200',
+                     'data'    => ['is_new_account' => true, 'newly_bound' => true],
+                 ]);
+
+        $member = Member::where('email', 'gh-user@example.com')->first();
+        $this->assertNotNull($member);
+
+        $this->assertDatabaseHas('member_sns', [
+            'member_id'        => $member->id,
+            'provider'         => 'github',
+            'provider_user_id' => 'github-uid-999',
+        ]);
+
+        $this->assertDatabaseHas('member_login_histories', [
+            'member_id'    => $member->id,
+            'login_method' => 'github',
+            'status'       => true,
+        ]);
+    }
+
     // ---- side effects ----
 
     public function test_callback_records_login_history_and_issues_token(): void
