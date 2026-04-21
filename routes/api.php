@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
+use App\Http\Controllers\Api\V1\Auth\OAuthController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\RegisterSchemaController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
@@ -38,6 +39,10 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('login', LoginController::class);
     Route::post('password/forgot', ForgotPasswordController::class);
     Route::post('password/reset', ResetPasswordController::class);
+
+    // OAuth
+    Route::get('oauth/{provider}/redirect', [OAuthController::class, 'redirect']);
+    Route::get('oauth/{provider}/callback', [OAuthController::class, 'callback']);
 });
 
 // 前台會員 /me 管理自己資料（需登入 member guard）
