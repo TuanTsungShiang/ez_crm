@@ -101,6 +101,9 @@ class AuthLoginTest extends TestCase
         ]);
 
         $response->assertStatus(403)
-                 ->assertJson(['code' => 'A005']);
+                 ->assertJson(['code' => 'A005'])
+                 ->assertJson([
+                     'errors' => ['email' => ['login@example.com']],
+                 ]);
     }
 }

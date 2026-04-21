@@ -62,7 +62,7 @@ class LoginController extends Controller
                 ApiCode::EMAIL_NOT_VERIFIED,
                 'Email 尚未驗證',
                 403,
-                ['email' => $member->email]
+                ['email' => [$member->email]]
             );
         }
 
