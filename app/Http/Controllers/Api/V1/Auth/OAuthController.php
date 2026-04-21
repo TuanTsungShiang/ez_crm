@@ -8,6 +8,8 @@ use App\Http\Traits\ApiResponse;
 use App\Models\MemberLoginHistory;
 use App\Services\OAuth\OAuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class OAuthController extends Controller
@@ -45,8 +47,12 @@ class OAuthController extends Controller
             return $this->error(ApiCode::PROVIDER_NOT_SUPPORTED, "Provider {$provider} not supported", 422);
         }
 
+        $state = Str::random(40);
+        Cache::put("oauth_state_{$state}", true, now()->addMinutes(10));
+
         $url = Socialite::driver($provider)
             ->stateless()
+            ->with(['state' => $state])
             ->redirect()
             ->getTargetUrl();
 
@@ -80,6 +86,11 @@ class OAuthController extends Controller
     {
         if (! $this->oauthService->isProviderAllowed($provider)) {
             return $this->error(ApiCode::PROVIDER_NOT_SUPPORTED, "Provider {$provider} not supported", 422);
+        }
+
+        $state = $request->input('state');
+        if (! $state || ! Cache::pull("oauth_state_{$state}")) {
+            return $this->error(ApiCode::OAUTH_FAILED, 'OAuth 授權失敗：state 無效或已過期', 400);
         }
 
         try {

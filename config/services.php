@@ -43,4 +43,16 @@ return [
         'redirect'      => env('GITHUB_REDIRECT_URI'),
     ],
 
+    'line' => [
+        'client_id'     => env('LINE_CLIENT_ID'),
+        'client_secret' => env('LINE_CLIENT_SECRET'),
+        'redirect'      => env('LINE_REDIRECT_URI'),
+    ],
+
+    'discord' => [
+        'client_id'     => env('DISCORD_CLIENT_ID'),
+        'client_secret' => env('DISCORD_CLIENT_SECRET'),
+        'redirect'      => env('DISCORD_REDIRECT_URI'),
+    ],
+
 ];
