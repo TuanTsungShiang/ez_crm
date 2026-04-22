@@ -1,0 +1,204 @@
+<?php
+
+namespace Tests\Feature\Webhooks;
+
+use App\Events\Webhooks\MemberCreated;
+use App\Jobs\SendWebhookJob;
+use App\Models\Member;
+use App\Models\WebhookDelivery;
+use App\Models\WebhookEvent;
+use App\Models\WebhookSubscription;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Tests\TestCase;
+
+/**
+ * DispatchWebhook listener 的 feature test。
+ *
+ * 只驗證「event 觸發 → Event/Delivery 正確建立 → Job 入 queue」這條路徑,
+ * 不實際呼叫下游 HTTP (那是 SendWebhookJob 的責任,另檔測試)。
+ */
+class DispatchWebhookTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function makeActiveMember(string $email = 'wh-test@example.com'): Member
+    {
+        return Member::create([
+            'uuid'              => (string) Str::uuid(),
+            'name'              => 'Webhook Test',
+            'email'             => $email,
+            'password'          => 'secret',
+            'status'            => Member::STATUS_ACTIVE,
+            'email_verified_at' => now(),
+        ]);
+    }
+
+    private function makeSubscription(array $events = ['member.created'], array $overrides = []): WebhookSubscription
+    {
+        return WebhookSubscription::create(array_merge([
+            'name'              => 'Test Subscriber',
+            'url'               => 'https://example.test/webhook',
+            'events'            => $events,
+            'secret'            => WebhookSubscription::generateSecret(),
+            'is_active'         => true,
+            'is_circuit_broken' => false,
+            'max_retries'       => 5,
+            'timeout_seconds'   => 10,
+        ], $overrides));
+    }
+
+    // ---- 基本 flow ----
+
+    public function test_member_created_event_writes_event_and_delivery(): void
+    {
+        Bus::fake();
+        $sub = $this->makeSubscription();
+        $member = $this->makeActiveMember();
+
+        event(new MemberCreated($member));
+
+        // Event 被存
+        $this->assertDatabaseCount('webhook_events', 1);
+        $this->assertDatabaseHas('webhook_events', [
+            'event_type' => 'member.created',
+        ]);
+
+        // Delivery 在 pending 狀態
+        $this->assertDatabaseCount('webhook_deliveries', 1);
+        $this->assertDatabaseHas('webhook_deliveries', [
+            'subscription_id' => $sub->id,
+            'status'          => WebhookDelivery::STATUS_PENDING,
+            'attempts'        => 0,
+        ]);
+
+        // Job 入 queue(我們用 Bus::fake 攔下,不實際送)
+        Bus::assertDispatched(SendWebhookJob::class);
+    }
+
+    public function test_payload_includes_sequence_number(): void
+    {
+        Bus::fake();
+        $this->makeSubscription();
+
+        $m1 = $this->makeActiveMember('seq-a@example.com');
+        event(new MemberCreated($m1));
+
+        $m2 = $this->makeActiveMember('seq-b@example.com');
+        event(new MemberCreated($m2));
+
+        $events = WebhookEvent::orderBy('id')->get();
+        $this->assertCount(2, $events);
+        $this->assertSame($events[0]->id, $events[0]->payload['sequence']);
+        $this->assertSame($events[1]->id, $events[1]->payload['sequence']);
+        $this->assertGreaterThan(
+            $events[0]->payload['sequence'],
+            $events[1]->payload['sequence'],
+            'sequence 要單調遞增',
+        );
+    }
+
+    // ---- Subscription 過濾 ----
+
+    public function test_inactive_subscription_not_dispatched(): void
+    {
+        Bus::fake();
+        $this->makeSubscription(['member.created'], ['is_active' => false]);
+
+        event(new MemberCreated($this->makeActiveMember()));
+
+        // Event 仍會存(供稽核 / 日後補送)
+        $this->assertDatabaseCount('webhook_events', 1);
+        // 但沒 delivery
+        $this->assertDatabaseCount('webhook_deliveries', 0);
+        Bus::assertNothingDispatched();
+    }
+
+    public function test_circuit_broken_subscription_not_dispatched(): void
+    {
+        Bus::fake();
+        $this->makeSubscription(['member.created'], ['is_circuit_broken' => true]);
+
+        event(new MemberCreated($this->makeActiveMember()));
+
+        $this->assertDatabaseCount('webhook_deliveries', 0);
+    }
+
+    public function test_subscription_not_subscribed_to_event_not_dispatched(): void
+    {
+        Bus::fake();
+        // 訂閱 wallet.changed,不是 member.created
+        $this->makeSubscription(['wallet.changed']);
+
+        event(new MemberCreated($this->makeActiveMember()));
+
+        $this->assertDatabaseCount('webhook_deliveries', 0);
+    }
+
+    public function test_multiple_subscribers_each_get_own_delivery(): void
+    {
+        Bus::fake();
+        $sub1 = $this->makeSubscription(['member.created'], ['name' => 'Sub A']);
+        $sub2 = $this->makeSubscription(['member.created'], ['name' => 'Sub B']);
+
+        event(new MemberCreated($this->makeActiveMember()));
+
+        $this->assertDatabaseCount('webhook_deliveries', 2);
+        $this->assertDatabaseHas('webhook_deliveries', ['subscription_id' => $sub1->id]);
+        $this->assertDatabaseHas('webhook_deliveries', ['subscription_id' => $sub2->id]);
+
+        Bus::assertDispatchedTimes(SendWebhookJob::class, 2);
+    }
+
+    // ---- Payload size guard ----
+
+    public function test_payload_over_512kb_is_not_dispatched(): void
+    {
+        Bus::fake();
+        Log::spy();
+        $this->makeSubscription();
+
+        // 做一個會超過 512KB 的 event(匿名類別繞過 $listen 映射,直接餵 listener)
+        $fakeEvent = new class {
+            public function toWebhookPayload(): array
+            {
+                return [
+                    'event'       => 'member.created',
+                    'occurred_at' => now()->toIso8601String(),
+                    'data'        => ['bloat' => str_repeat('A', 600 * 1024)],
+                ];
+            }
+        };
+
+        // 直接 invoke listener (event() 對匿名 class 找不到 $listen 對應)
+        app(\App\Listeners\DispatchWebhook::class)->handle($fakeEvent);
+
+        $this->assertDatabaseCount('webhook_events', 0);
+        $this->assertDatabaseCount('webhook_deliveries', 0);
+        Log::shouldHaveReceived('error')->once();
+    }
+
+    // ---- 整合:真的跑 Register flow 會觸發事件 ----
+
+    public function test_register_endpoint_triggers_member_created_webhook(): void
+    {
+        Bus::fake();
+        $this->makeSubscription();
+
+        $this->postJson('/api/v1/auth/register', [
+            'name'                  => 'Integration Test',
+            'email'                 => 'integration@example.com',
+            'password'              => 'Test1234',
+            'password_confirmation' => 'Test1234',
+            'agree_terms'           => true,
+        ])->assertStatus(201);
+
+        $this->assertDatabaseCount('webhook_events', 1);
+        $this->assertDatabaseHas('webhook_events', [
+            'event_type' => 'member.created',
+        ]);
+        $this->assertDatabaseCount('webhook_deliveries', 1);
+    }
+}
