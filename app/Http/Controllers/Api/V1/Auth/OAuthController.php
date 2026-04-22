@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Enums\ApiCode;
+use App\Events\Webhooks\MemberLoggedIn;
+use App\Events\Webhooks\OAuthBound;
 use App\Http\Controllers\Controller;
 use App\Http\Traits\ApiResponse;
 use App\Models\MemberLoginHistory;
@@ -114,6 +116,16 @@ class OAuthController extends Controller
 
         $member->update(['last_login_at' => now()]);
         $token = $member->createToken("oauth-{$provider}")->plainTextToken;
+
+        // Webhooks
+        if ($result['newly_bound']) {
+            // 剛綁定的 SNS(情境 2 或 3)
+            $sns = $member->sns()->where('provider', $provider)->latest('id')->first();
+            if ($sns) {
+                event(new OAuthBound($member, $sns, $result['is_new']));
+            }
+        }
+        event(new MemberLoggedIn($member, $provider));
 
         $data = [
             'token'          => $token,

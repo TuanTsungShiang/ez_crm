@@ -180,6 +180,69 @@ class DispatchWebhookTest extends TestCase
         Log::shouldHaveReceived('error')->once();
     }
 
+    // ---- 多事件類型 ----
+
+    public function test_member_verified_email_event_fires_matching_webhook(): void
+    {
+        Bus::fake();
+        $this->makeSubscription(['member.email_verified']);
+
+        event(new \App\Events\Webhooks\MemberVerifiedEmail($this->makeActiveMember()));
+
+        $this->assertDatabaseHas('webhook_events', [
+            'event_type' => 'member.email_verified',
+        ]);
+        $this->assertDatabaseCount('webhook_deliveries', 1);
+    }
+
+    public function test_member_logged_in_event_carries_method(): void
+    {
+        Bus::fake();
+        $this->makeSubscription(['member.logged_in']);
+
+        $member = $this->makeActiveMember();
+        event(new \App\Events\Webhooks\MemberLoggedIn($member, 'google'));
+
+        $event = \App\Models\WebhookEvent::where('event_type', 'member.logged_in')->first();
+        $this->assertNotNull($event);
+        $this->assertSame('google', $event->payload['data']['method']);
+    }
+
+    public function test_oauth_bound_event_carries_provider_metadata(): void
+    {
+        Bus::fake();
+        $this->makeSubscription(['oauth.bound']);
+
+        $member = $this->makeActiveMember();
+        $sns = \App\Models\MemberSns::create([
+            'member_id'        => $member->id,
+            'provider'         => 'github',
+            'provider_user_id' => 'gh-99',
+        ]);
+
+        event(new \App\Events\Webhooks\OAuthBound($member, $sns, isNewAccount: false));
+
+        $event = \App\Models\WebhookEvent::where('event_type', 'oauth.bound')->first();
+        $this->assertNotNull($event);
+        $this->assertSame('github', $event->payload['data']['provider']);
+        $this->assertSame('gh-99', $event->payload['data']['provider_user_id']);
+        $this->assertFalse($event->payload['data']['is_new_account']);
+    }
+
+    public function test_subscription_filters_events_by_type(): void
+    {
+        Bus::fake();
+        // 只訂閱 member.logged_in,不訂 member.created
+        $this->makeSubscription(['member.logged_in']);
+
+        event(new \App\Events\Webhooks\MemberCreated($this->makeActiveMember()));
+
+        // webhook_events 仍會寫(稽核快照)
+        $this->assertDatabaseCount('webhook_events', 1);
+        // 但 deliveries 應該 0,因為沒有訂閱者訂 member.created
+        $this->assertDatabaseCount('webhook_deliveries', 0);
+    }
+
     // ---- 整合:真的跑 Register flow 會觸發事件 ----
 
     public function test_register_endpoint_triggers_member_created_webhook(): void

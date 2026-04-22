@@ -73,15 +73,16 @@ class RegisterController extends Controller
             return $member;
         });
 
+        // Webhook 先發:不要讓 email 寄信失敗(例如 Mailtrap rate limit)
+        // 阻擋掉對下游服務的通知 —— member 已經建立就該通知下游。
+        event(new MemberCreated($member));
+
         $verification = $this->otpService->generate($member, MemberVerification::TYPE_EMAIL);
         $member->notify(new SendOtpNotification(
             $verification->token,
             MemberVerification::TYPE_EMAIL,
             OtpService::OTP_EXPIRE_MINS,
         ));
-
-        // Webhook:通知下游服務有新會員註冊
-        event(new MemberCreated($member));
 
         return $this->created([
             'member_uuid'    => $member->uuid,

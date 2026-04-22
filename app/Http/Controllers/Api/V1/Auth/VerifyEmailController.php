@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Enums\ApiCode;
+use App\Events\Webhooks\MemberLoggedIn;
+use App\Events\Webhooks\MemberVerifiedEmail;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\VerifyEmailRequest;
 use App\Http\Traits\ApiResponse;
@@ -65,6 +67,10 @@ class VerifyEmailController extends Controller
 
         $member->markEmailAsVerified();
         $member->update(['status' => Member::STATUS_ACTIVE]);
+
+        // Webhooks:先 email verified,再 logged_in
+        event(new MemberVerifiedEmail($member->fresh()));
+        event(new MemberLoggedIn($member, 'email'));
 
         $token = $member->createToken('member-web')->plainTextToken;
 
