@@ -169,6 +169,78 @@ member.created ──webhook──▶ ez_crm internal SMS handler ──▶ Mita
                        └▶ 其他...
 ```
 
+---
+
+## 💰 成本優化策略:多通道 Fallback 設計
+
+**SMS 每則 0.8 元,每天發 1 萬則就是 8 千元**。成本控管不是 nice-to-have,是必需。
+
+### Channel 優先序(免費 → 付費)
+
+`SmsManager::send($member, $message)` 內部要依序嘗試:
+
+```
+1. 檢查 member 有沒有 LINE 綁定?
+   YES → 用 LINE Notify / LINE Messaging API 推播(★ 免費 ★)
+   NO  → 下一步
+
+2. 檢查 member 有沒有 APP push token?(未來有 app)
+   YES → 用 FCM / APNs(★ 免費 ★)
+   NO  → 下一步
+
+3. 這則訊息是「必達」(OTP / 付款通知)還是「可延後」(行銷)?
+   必達 → SMS
+   可延後 → email(★ 0 元 ★)
+
+4. SMS(Mitake)— 最後 fallback
+```
+
+### 為什麼這個設計是好東西
+
+| 面向 | 說明 |
+|---|---|
+| **成本** | 假設 50% 會員綁 LINE → SMS 量直接砍半 → 每月省數千到數萬元 |
+| **UX** | LINE 送達率高於 SMS(SMS 常被當垃圾訊息不開啟)|
+| **合規** | LINE 不受 NCC 的 24:00-06:00 行銷時段限制 |
+| **可觀測性** | 同一張 `notifications` 表記錄「這則訊息走哪個 channel 成功」,分析成本結構用 |
+
+### 資料模型補充
+
+`sms_messages` 重新命名為 **`notifications`**(含 SMS 只是 channel 之一):
+
+| 欄位 | 說明 |
+|---|---|
+| ... 既有欄位 ... | |
+| `channel` | `sms` / `line` / `fcm` / `email` / `webhook` |
+| `fallback_attempts` | JSON array,紀錄嘗試過哪幾個 channel 各自的結果 |
+
+### Phase 8 實作順序(優先級已調整)
+
+| 階段 | 原定 | 新定 | 說明 |
+|---|---|---|---|
+| 8.0 | Mitake driver | **NullDriver + Log driver**(dev 免費)| dev 時用 log,不發真 SMS |
+| 8.1 | Phone OTP | Phone OTP(用 LogDriver)| 同上 |
+| 8.2 | Channel | **Notification channel 抽象**(先 SMS + email)| 建立 multi-channel 架構 |
+| 8.3 | Rate limit | **加 LINE Notify channel** | 免費 channel 先到位 |
+| 8.4 | Filament UI | Filament UI | |
+| 8.5 | — | **加 Mitake driver**(production 上線前才做)| 需要申請企業帳號 |
+
+**意涵**:dev 期間完全免費,需求驗證完才投錢買 Mitake credits。
+
+---
+
+## 📬 Email / SMS 部署對照(回答「乾脆 SendGrid?」)
+
+很多人會想:既然 SMS 用 Twilio,email 為何還 Mailtrap 不 SendGrid?解釋兩層分工:
+
+| 階段 | Email | SMS |
+|---|---|---|
+| **Dev** | Mailtrap(免費 sandbox)| **LogDriver**(我們自刻)or Twilio trial |
+| **Staging** | SendGrid free tier(100/day)| Twilio trial($15)|
+| **Production** | SendGrid / SES / Postmark | Mitake / Every8D |
+
+一句話記:**「開發期攔截(不真送)、正式期走真的 provider」**。Mailtrap 跟 Mitake 都是「dev 攔截」的工具,雖然前者是專業沙盒、後者是我們自己做的 log 而已。
+
 這避免 SMS 邏輯散落各 controller,用統一的事件驅動架構。
 
 ---

@@ -146,9 +146,29 @@
 
 ## 🎁 如果還有時間(bonus)
 
-1. **Webhook consumer guide**:寫一份 `scheme/api/webhook_consumer_guide.md`,含 PHP / Node / Python 3 種語言的 HMAC 驗簽範例 + idempotency 實作建議。
-2. **Filament 權限雛形**:目前所有 admin 看得到所有頁面,未來要支援 multi-role。
-3. **前端 toast 通用化**:`ForgotPassword` / `ResetPassword` / `MeEdit` 都需要成功 toast,抽成共用 composable `useToast`。
+### B1. SMS Phase 8.0 骨架(★ 推薦,完全免費)
+
+跟主 task 有強關聯(都在補 Auth / Me 流程),實作完今天不花錢、明天也能繼續 iterate:
+
+- [ ] 建 `app/Services/Sms/Contracts/SmsDriver.php` interface(`send() / query() / balance()`)
+- [ ] 建 `app/Services/Sms/Drivers/LogDriver.php`(把訊息寫到 `storage/logs/laravel.log` 就好,零成本)
+- [ ] 建 `app/Services/Sms/Drivers/NullDriver.php`(測試用,啥事不做)
+- [ ] 建 `app/Services/Sms/SmsManager.php`(讀 config 決定用哪個 driver)
+- [ ] 建 `notifications` migration(名字刻意不叫 sms_messages,未來 channel 會擴充)
+  - 欄位照 [SMS_INTEGRATION_PLAN.md](../../scheme/improvement_plan/2026/04/SMS_INTEGRATION_PLAN.md) 「成本優化策略」那段(含 `channel` / `fallback_attempts`)
+- [ ] 擴充 `OtpService` 支援 `type='phone'`(class 裡本來就用 type 參數化,應該很順)
+- [ ] **2 支新 endpoint**:
+  - `POST /api/v1/auth/verify/phone/send`
+  - `POST /api/v1/auth/verify/phone`
+- [ ] Feature test(end-to-end 走完 phone OTP + LogDriver 寫 log)
+
+**估時 1.5-2 小時**(因為 NullDriver/LogDriver 沒有 external API 要串,超省事)。做完等於 Phase 8 已經骨架到位,真 provider 交付只是 driver class 換掉。
+
+### B2. 其他
+
+- **Webhook consumer guide**:寫一份 `scheme/api/webhook_consumer_guide.md`,含 PHP / Node / Python 3 種語言的 HMAC 驗簽範例 + idempotency 實作建議。
+- **Filament 權限雛形**:目前所有 admin 看得到所有頁面,未來要支援 multi-role。
+- **前端 toast 通用化**:`ForgotPassword` / `ResetPassword` / `MeEdit` 都需要成功 toast,抽成共用 composable `useToast`。
 
 ---
 
