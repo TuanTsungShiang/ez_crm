@@ -439,8 +439,109 @@ Webhook 遞送會失敗。需要在「盡力重送」跟「保護自己系統」
 
 ---
 
+## Stretch Goals（8 週之後的加分題）
+
+前面六大主題是「現在缺了會扣分」，這區是「有了會加分」——優先序務必分清楚，不要提早投入。
+
+### SG-1：官方 SDK（client library）
+
+#### 為什麼列為 stretch，不排進 8 週
+
+SDK 只有在**有真實外部消費者**時才是產品決策。ez_crm 目前沒有外部整合者，所以這是「履歷決策」——它的價值在於展示 senior 才會碰的技能：**API 版本化、semver、breaking change 管理、npm/packagist 發布流程、DX 設計**。
+
+#### 要做就做兩件事，其他自動產
+
+1. **Client SDK（TypeScript + PHP 兩份）— 自動產，不要手刻**
+
+   你已經有 Swagger/OpenAPI spec，直接用工具生成：
+   - [OpenAPI Generator](https://openapi-generator.tech/)（免費、官方感重）
+   - [Speakeasy](https://www.speakeasy.com/)（商業、DX 最好）
+   - [@hey-api/openapi-ts](https://heyapi.dev/)（輕量、TS 專用）
+
+   產物：
+   ```
+   ez-crm-sdk-js/      # npm 包：@ez-crm/sdk
+   ez-crm-sdk-php/     # packagist 包：ez-crm/sdk
+   ```
+
+   前端 ez_crm_client 就可以**改用自己的 SDK**——形成「dogfooding」，這是面試超級強的訊號（「我自己都在用我發佈的 SDK」）。
+
+2. **Webhook Receiver SDK — 唯一值得手刻的**
+
+   這才是 SDK 的 DX 真正價值所在。使用者端的 pain point：
+   - HMAC 簽章驗證（一堆人寫錯導致 timing attack）
+   - Idempotency key 去重
+   - 重放攻擊防護（timestamp window）
+   - Event 型別安全（每種 event 的 payload 不同）
+
+   目標：使用者只要 3 行就能接：
+   ```typescript
+   // TypeScript 範例
+   import { WebhookReceiver } from '@ez-crm/sdk';
+
+   const receiver = new WebhookReceiver({ secret: process.env.EZ_CRM_SECRET });
+
+   app.post('/webhook', receiver.express((event) => {
+     if (event.type === 'member.created') {
+       // event.data 是強型別 Member
+     }
+   }));
+   ```
+
+   ```php
+   // PHP 範例
+   $receiver = new WebhookReceiver(secret: env('EZ_CRM_SECRET'));
+   $event = $receiver->verify($request);
+   match ($event->type) {
+       'member.created' => handleMemberCreated($event->data),
+   };
+   ```
+
+#### 發布流程（這是真正的 senior 訊號）
+
+用 [changesets](https://github.com/changesets/changesets) 或 [semantic-release](https://semantic-release.gitbook.io/)：
+
+```
+commit 訊息 → 自動判斷 semver bump → tag → changelog → npm publish → GitHub release
+```
+
+全部在 GitHub Actions 上跑完，零手動步驟。
+
+#### 學習關鍵字
+
+`OpenAPI Generator`、`semantic-release`、`changesets`、`npm publish provenance`、`packagist auto-update hook`、`SDK dogfooding`、`webhook timing-safe comparison`、`replay attack prevention`
+
+#### 驗收標準
+
+- [ ] `npm install @ez-crm/sdk` 能裝到自己發佈的版本
+- [ ] `composer require ez-crm/sdk` 能裝到自己發佈的版本
+- [ ] ez_crm_client 改用自己的 SDK（dogfooding）
+- [ ] Webhook Receiver 有完整測試（錯誤簽章、過期 timestamp、重放）
+- [ ] CHANGELOG 由 commit 自動產生
+- [ ] SDK repo 有自己的 CI + badge
+- [ ] 面試能講清楚「為什麼 client SDK 自動產、receiver SDK 手刻」
+
+---
+
+### SG-2：其他可能的 stretch 方向（先記著，需要時再展開）
+
+| 方向 | 適合時機 | 一句話理由 |
+|------|----------|-----------|
+| **Terraform / Pulumi IaC** | 當你真的要部署到 AWS/GCP 時 | 從「會 Docker」進階到「會管基礎設施」 |
+| **k8s + Helm chart** | 已經有 Docker 之後 | 展示能處理 production-scale 編排 |
+| **E2E 測試（Playwright）** | 前端測試穩定後 | 驗證整條使用者旅程，不只是單元 |
+| **Performance budget** | 前端有一定規模後 | Lighthouse CI + bundle size 檢查 |
+| **Feature flag 系統** | 功能變多後 | 展示漸進式發布的思維 |
+| **多租戶改造** | 當 ez_crm 準備開放 | 非常進階的架構挑戰 |
+| **OpenTelemetry** | Sentry 熟悉後 | 超越 error tracking，進到 distributed tracing |
+
+這些**不要都做**——每一項都是一個月起跳。挑 1-2 個你面試目標公司最在意的就好。
+
+---
+
 ## 備註
 
 - 這份是「補短板」，不是「從零學」。你的程式碼能力已夠，差的是**工程化習慣**
 - 遇到卡關請直接問，不要自己挖兩天——這些工具的「正確姿勢」很難從文件看出來
 - 完成一項就在本檔案 checkbox 打勾，累積看得到進度的感覺很重要
+- **Stretch Goals 是 W9 之後的事**——不要用它逃避 W1-W8 比較無聊但更重要的基礎工
