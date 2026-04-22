@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Events\Webhooks\MemberCreated;
+use App\Events\Webhooks\MemberLoggedIn;
+use App\Events\Webhooks\MemberVerifiedEmail;
+use App\Events\Webhooks\OAuthBound;
 use App\Listeners\DispatchWebhook;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -29,9 +32,10 @@ class EventServiceProvider extends ServiceProvider
         ],
 
         // Webhook events — 共用同一個 DispatchWebhook listener
-        MemberCreated::class => [
-            DispatchWebhook::class,
-        ],
+        MemberCreated::class       => [DispatchWebhook::class],
+        MemberVerifiedEmail::class => [DispatchWebhook::class],
+        MemberLoggedIn::class      => [DispatchWebhook::class],
+        OAuthBound::class          => [DispatchWebhook::class],
     ];
 
     /**

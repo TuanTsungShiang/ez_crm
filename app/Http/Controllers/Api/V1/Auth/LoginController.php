@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Enums\ApiCode;
+use App\Events\Webhooks\MemberLoggedIn;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Traits\ApiResponse;
@@ -69,6 +70,9 @@ class LoginController extends Controller
         $token = $member->createToken($request->device_name ?? 'member-web')->plainTextToken;
         $member->update(['last_login_at' => now()]);
         $this->recordLoginAttempt($member, $request, true);
+
+        // Webhook 通知下游
+        event(new MemberLoggedIn($member, 'email'));
 
         return $this->success([
             'token'  => $token,

@@ -33,11 +33,13 @@ class WebhookSubscriptionResource extends Resource
     public static function availableEvents(): array
     {
         return [
-            'member.created' => 'member.created（會員註冊）',
-            'member.updated' => 'member.updated（會員更新）',
-            'member.deleted' => 'member.deleted（會員刪除）',
-            'oauth.bound'    => 'oauth.bound（綁定第三方）',
-            'oauth.unbound'  => 'oauth.unbound（解除第三方）',
+            'member.created'        => 'member.created（會員註冊）',
+            'member.email_verified' => 'member.email_verified（Email 驗證完成）',
+            'member.logged_in'      => 'member.logged_in（會員登入）',
+            'member.updated'        => 'member.updated（會員更新）',
+            'member.deleted'        => 'member.deleted（會員刪除）',
+            'oauth.bound'           => 'oauth.bound（綁定第三方）',
+            'oauth.unbound'         => 'oauth.unbound（解除第三方）',
         ];
     }
 
