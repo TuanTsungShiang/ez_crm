@@ -106,7 +106,7 @@ class OAuthTest extends TestCase
 
     public function test_callback_rejects_unsupported_provider(): void
     {
-        $this->getJson('/api/v1/auth/oauth/bogus/callback?code=xxx')
+        $this->getJson('/api/v1/auth/oauth/bogus/callback?format=json&code=xxx')
              ->assertStatus(422)
              ->assertJson(['code' => 'A013']);
     }
@@ -115,14 +115,14 @@ class OAuthTest extends TestCase
 
     public function test_callback_rejects_missing_state(): void
     {
-        $this->getJson('/api/v1/auth/oauth/google/callback?code=fake')
+        $this->getJson('/api/v1/auth/oauth/google/callback?format=json&code=fake')
              ->assertStatus(400)
              ->assertJson(['success' => false, 'code' => 'A010']);
     }
 
     public function test_callback_rejects_invalid_state(): void
     {
-        $this->getJson('/api/v1/auth/oauth/google/callback?code=fake&state=not-a-real-state')
+        $this->getJson('/api/v1/auth/oauth/google/callback?format=json&code=fake&state=not-a-real-state')
              ->assertStatus(400)
              ->assertJson(['success' => false, 'code' => 'A010']);
     }
@@ -132,12 +132,12 @@ class OAuthTest extends TestCase
         $state = $this->seedOAuthState();
 
         $this->mockSocialiteUser('google', $this->fakeSocialiteUser());
-        $this->getJson("/api/v1/auth/oauth/google/callback?code=fake&state={$state}")
+        $this->getJson("/api/v1/auth/oauth/google/callback?format=json&code=fake&state={$state}")
              ->assertStatus(200);
 
         // 第二次用同一個 state 應該被拒絕（已被 Cache::pull 消耗）
         $this->mockSocialiteUser('google', $this->fakeSocialiteUser());
-        $this->getJson("/api/v1/auth/oauth/google/callback?code=fake&state={$state}")
+        $this->getJson("/api/v1/auth/oauth/google/callback?format=json&code=fake&state={$state}")
              ->assertStatus(400)
              ->assertJson(['code' => 'A010']);
     }
@@ -154,7 +154,7 @@ class OAuthTest extends TestCase
             'name'  => '新人',
         ]));
 
-        $response = $this->getJson("/api/v1/auth/oauth/google/callback?code=fake&state={$state}");
+        $response = $this->getJson("/api/v1/auth/oauth/google/callback?format=json&code=fake&state={$state}");
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -194,7 +194,7 @@ class OAuthTest extends TestCase
             'email' => 'existing@example.com',
         ]));
 
-        $response = $this->getJson("/api/v1/auth/oauth/google/callback?code=fake&state={$state}");
+        $response = $this->getJson("/api/v1/auth/oauth/google/callback?format=json&code=fake&state={$state}");
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -236,7 +236,7 @@ class OAuthTest extends TestCase
             'email' => 'bound@example.com',
         ]));
 
-        $response = $this->getJson("/api/v1/auth/oauth/google/callback?code=fake&state={$state}");
+        $response = $this->getJson("/api/v1/auth/oauth/google/callback?format=json&code=fake&state={$state}");
 
         $response->assertStatus(200)
                  ->assertJson([
@@ -258,7 +258,7 @@ class OAuthTest extends TestCase
         $state = $this->seedOAuthState();
         $this->mockSocialiteFailure('google');
 
-        $this->getJson("/api/v1/auth/oauth/google/callback?code=invalid&state={$state}")
+        $this->getJson("/api/v1/auth/oauth/google/callback?format=json&code=invalid&state={$state}")
              ->assertStatus(400)
              ->assertJson(['success' => false, 'code' => 'A010']);
     }
@@ -276,7 +276,7 @@ class OAuthTest extends TestCase
             'nickname' => 'gh-handle',
         ]));
 
-        $this->getJson("/api/v1/auth/oauth/github/callback?code=fake&state={$state}")
+        $this->getJson("/api/v1/auth/oauth/github/callback?format=json&code=fake&state={$state}")
              ->assertStatus(200)
              ->assertJson(['data' => ['is_new_account' => true, 'newly_bound' => true]]);
 
@@ -306,7 +306,7 @@ class OAuthTest extends TestCase
             'name'  => 'LINE 使用者',
         ]));
 
-        $this->getJson("/api/v1/auth/oauth/line/callback?code=fake&state={$state}")
+        $this->getJson("/api/v1/auth/oauth/line/callback?format=json&code=fake&state={$state}")
              ->assertStatus(200)
              ->assertJson(['data' => ['is_new_account' => true]]);
 
@@ -327,7 +327,7 @@ class OAuthTest extends TestCase
             'name'  => 'LINE 使用者',
         ]));
 
-        $this->getJson("/api/v1/auth/oauth/line/callback?code=fake&state={$state}")
+        $this->getJson("/api/v1/auth/oauth/line/callback?format=json&code=fake&state={$state}")
              ->assertStatus(200);
 
         $member = Member::where('email', 'line-user@example.com')->first();
@@ -347,7 +347,7 @@ class OAuthTest extends TestCase
             'nickname' => 'discord_handle',
         ]));
 
-        $this->getJson("/api/v1/auth/oauth/discord/callback?code=fake&state={$state}")
+        $this->getJson("/api/v1/auth/oauth/discord/callback?format=json&code=fake&state={$state}")
              ->assertStatus(200)
              ->assertJson(['data' => ['is_new_account' => true, 'newly_bound' => true]]);
 
@@ -371,7 +371,7 @@ class OAuthTest extends TestCase
             'email' => 'history@example.com',
         ]));
 
-        $this->getJson("/api/v1/auth/oauth/google/callback?code=fake&state={$state}")
+        $this->getJson("/api/v1/auth/oauth/google/callback?format=json&code=fake&state={$state}")
              ->assertStatus(200);
 
         $member = Member::where('email', 'history@example.com')->first();
@@ -383,5 +383,44 @@ class OAuthTest extends TestCase
         ]);
         $this->assertCount(1, $member->tokens);
         $this->assertNotNull($member->fresh()->last_login_at);
+    }
+
+    // ---- HTML + postMessage (default for SPA popup flow) ----
+
+    public function test_callback_returns_html_with_postmessage_by_default(): void
+    {
+        $state = Str::random(40);
+        \Illuminate\Support\Facades\Cache::put("oauth_state_{$state}", true, now()->addMinutes(10));
+
+        $this->mockSocialiteUser('google', $this->fakeSocialiteUser([
+            'id'    => 'html-test-uid',
+            'email' => 'html-test@example.com',
+        ]));
+
+        // 注意：不帶 ?format=json,預期回 HTML
+        $response = $this->get("/api/v1/auth/oauth/google/callback?code=fake&state={$state}");
+
+        $response->assertStatus(200);
+        $this->assertStringContainsString('text/html', $response->headers->get('Content-Type'));
+
+        $body = $response->getContent();
+        // postMessage 呼叫要存在 + 帶正確 type
+        $this->assertStringContainsString('window.opener.postMessage', $body);
+        $this->assertStringContainsString('ez_crm_oauth_result', $body);
+        // targetOrigin 不是 '*'（避免 XSS 風險）
+        $this->assertStringNotContainsString("postMessage(payload, '*')", $body);
+        // 成功 flag
+        $this->assertStringContainsString('"success":true', $body);
+    }
+
+    public function test_callback_html_on_invalid_state_shows_error(): void
+    {
+        $response = $this->get('/api/v1/auth/oauth/google/callback?code=fake&state=bogus-state');
+
+        $response->assertStatus(400);
+        $this->assertStringContainsString('text/html', $response->headers->get('Content-Type'));
+        $body = $response->getContent();
+        $this->assertStringContainsString('"success":false', $body);
+        $this->assertStringContainsString('A010', $body);
     }
 }
