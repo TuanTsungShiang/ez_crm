@@ -26,6 +26,10 @@ class ApiCode
     const INVALID_CODE = 'A007';
     const THROTTLED = 'A008';
     const INVALID_CREDENTIALS = 'A009';
+    const OAUTH_FAILED = 'A010';
+    const SNS_ALREADY_BOUND = 'A011';
+    const LAST_LOGIN_METHOD = 'A012';
+    const PROVIDER_NOT_SUPPORTED = 'A013';
 
     // N — 資源不存在類
     const NOT_FOUND = 'N001';
