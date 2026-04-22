@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\Webhooks\MemberCreated;
+use App\Listeners\DispatchWebhook;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -24,6 +26,11 @@ class EventServiceProvider extends ServiceProvider
         SocialiteWasCalled::class => [
             LineExtendSocialite::class,
             DiscordExtendSocialite::class,
+        ],
+
+        // Webhook events — 共用同一個 DispatchWebhook listener
+        MemberCreated::class => [
+            DispatchWebhook::class,
         ],
     ];
 

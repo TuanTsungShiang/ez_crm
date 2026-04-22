@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Enums\ApiCode;
+use App\Events\Webhooks\MemberCreated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Traits\ApiResponse;
@@ -78,6 +79,9 @@ class RegisterController extends Controller
             MemberVerification::TYPE_EMAIL,
             OtpService::OTP_EXPIRE_MINS,
         ));
+
+        // Webhook:通知下游服務有新會員註冊
+        event(new MemberCreated($member));
 
         return $this->created([
             'member_uuid'    => $member->uuid,
