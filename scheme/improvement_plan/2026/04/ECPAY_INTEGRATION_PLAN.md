@@ -81,23 +81,31 @@ app/Http/Controllers/Webhooks/
 
 #### `orders` — 訂單主表
 
-| 欄位 | 型別 | 說明 |
-|---|---|---|
-| id | BIGINT PK | |
-| uuid | CHAR(36) UNIQUE | 對外公開 |
-| member_id | BIGINT FK | 下單會員 |
-| merchant_trade_no | VARCHAR(20) UNIQUE | ECPay 的訂單編號(<=20 字) |
-| amount | INT | 新台幣,整數 |
-| currency | CHAR(3) DEFAULT 'TWD' | |
-| status | ENUM | pending / processing / paid / failed / refunded / cancelled |
-| payment_method | VARCHAR(20) | Credit / ATM / CVS / AlipayHK... |
-| items | JSON | 商品明細快照 |
-| metadata | JSON | 自由擴充 |
-| paid_at | TIMESTAMP NULL | |
-| expires_at | TIMESTAMP NULL | 付款期限(ATM/CVS 有)|
-| timestamps | | |
+> 欄位設計已對應 2026-04-22 實測 smoke test(`ecpay-test/index.php`)ECPay sandbox 回傳的實際結構,不是純紙上規劃。
 
-Index: `(member_id, status)`, `(status, expires_at)`
+| 欄位 | 型別 | 對應 ECPay 回傳 | 說明 |
+|---|---|---|---|
+| id | BIGINT PK | — | |
+| uuid | CHAR(36) UNIQUE | — | 對外公開 |
+| member_id | BIGINT FK | — | 下單會員 |
+| merchant_trade_no | VARCHAR(20) UNIQUE | `MerchantTradeNo` | 我們端產的,ECPay 硬限 ≤20 字 |
+| provider_trade_no | VARCHAR(50) NULL | `TradeNo` | ECPay 自己的交易編號(例:`2604221743201915`)|
+| amount | INT | `TotalAmount` / `TradeAmt` | 新台幣,整數 |
+| currency | CHAR(3) DEFAULT 'TWD' | — | |
+| status | ENUM | 由 `RtnCode` 決定 | pending / processing / paid / failed / refunded / cancelled |
+| payment_method | VARCHAR(30) | `PaymentType` | `Credit_CreditCard` / `ATM_LAND` / `CVS_OK` / `BARCODE_BARCODE` 等 |
+| items | JSON | — | 商品明細快照 |
+| metadata | JSON | — | 自由擴充 |
+| rtn_code | SMALLINT NULL | `RtnCode` | `1` = 成功,其他數字對應 ECPay 錯誤碼 |
+| rtn_msg | VARCHAR(255) NULL | `RtnMsg` | `Succeeded` / 錯誤訊息 |
+| trade_date | DATETIME NULL | `TradeDate` | ECPay 收單時間(不是我們送單時間)|
+| paid_at | TIMESTAMP NULL | `PaymentDate` | 實際付款完成時間 |
+| payment_type_charge_fee | INT NULL | `PaymentTypeChargeFee` | ECPay 抽成金額 |
+| simulate_paid | BOOLEAN NULL | `SimulatePaid` | sandbox 會是 `1`,正式環境永遠 `0` |
+| expires_at | TIMESTAMP NULL | — | 付款期限(ATM/CVS 有)|
+| timestamps | — | — | |
+
+Index: `(member_id, status)`, `(status, expires_at)`, `(merchant_trade_no)`, `(provider_trade_no)`
 
 #### `order_payment_notifications` — ECPay 通知紀錄(稽核用)
 
