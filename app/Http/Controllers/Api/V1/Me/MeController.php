@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api\V1\Me;
 
 use App\Enums\ApiCode;
+use App\Events\Webhooks\MemberDeleted;
+use App\Events\Webhooks\MemberUpdated;
+use App\Events\Webhooks\OAuthUnbound;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Me\UpdateMeRequest;
 use App\Http\Requests\Api\V1\Me\UpdatePasswordRequest;
@@ -75,7 +78,22 @@ class MeController extends Controller
     public function update(UpdateMeRequest $request)
     {
         $member = $request->user();
-        $member->update($request->validated());
+
+        // 先 fill、不 save,抓 diff
+        $member->fill($request->validated());
+        $changes = [];
+        foreach ($member->getDirty() as $field => $newValue) {
+            $changes[$field] = [
+                'from' => $member->getOriginal($field),
+                'to'   => $newValue,
+            ];
+        }
+        $member->save();
+
+        // 只有真的有欄位變動才派 webhook(避免「送一樣的值」也發事件)
+        if (! empty($changes)) {
+            event(new MemberUpdated($member->fresh(), $changes));
+        }
 
         return $this->success(new MemberDetailResource($member->fresh()->load(['profile', 'sns', 'group', 'tags'])));
     }
@@ -170,8 +188,61 @@ class MeController extends Controller
     {
         $member = $request->user();
         $member->tokens()->delete();
-        $member->delete();
+        $member->delete(); // soft delete,deleted_at 會寫到 $member 這個 instance 的記憶體中
+
+        // Webhook:通知下游服務會員已註銷(snapshot 送 deleted_at)
+        // 用 $member 直接送,不用 fresh()——SoftDeletes scope 會讓 fresh() 查不到。
+        event(new MemberDeleted($member));
 
         return $this->success(null);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/me/sns/{provider}",
+     *     operationId="unbindOAuthProvider",
+     *     tags={"Me"},
+     *     summary="解除綁定第三方登入",
+     *     description="擋下「最後一個登入方式」的解綁:若這是最後一個 SNS 且 email 未驗證過,禁止解綁(A012 LAST_LOGIN_METHOD)—— 避免使用者把自己鎖在外面。有驗證過的 email 可以透過忘記密碼救回,所以允許解綁。",
+     *     security={{"member":{}}},
+     *     @OA\Parameter(
+     *         name="provider", in="path", required=true,
+     *         description="google / github / line / discord",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(response=200, description="解綁成功"),
+     *     @OA\Response(response=404, description="未綁定此 provider"),
+     *     @OA\Response(response=409, description="A012 — 最後登入方式,不可解綁")
+     * )
+     */
+    public function unbindSns(Request $request, string $provider)
+    {
+        $member = $request->user();
+        $sns = $member->sns()->where('provider', $provider)->first();
+
+        if (! $sns) {
+            return $this->error(ApiCode::NOT_FOUND, "未綁定 {$provider}", 404);
+        }
+
+        // 擋「最後登入方式」:當此 SNS 是最後一個,且 email 未驗證(→ 無法用忘記密碼救回)
+        $remainingSnsCount = $member->sns()->where('id', '!=', $sns->id)->count();
+        if ($remainingSnsCount === 0 && ! $member->hasVerifiedEmail()) {
+            return $this->error(
+                ApiCode::LAST_LOGIN_METHOD,
+                '這是你最後一個登入方式,解綁前請先驗證 email 或另外綁定一個登入方式',
+                409,
+                ['provider' => [$provider]],
+            );
+        }
+
+        $providerUserId = $sns->provider_user_id;
+        $sns->delete();
+
+        // Webhook:通知下游服務 SNS 已解綁
+        event(new OAuthUnbound($member, $provider, $providerUserId));
+
+        return $this->success([
+            'provider' => $provider,
+        ]);
     }
 }

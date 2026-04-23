@@ -208,6 +208,72 @@ class DispatchWebhookTest extends TestCase
         $this->assertSame('google', $event->payload['data']['method']);
     }
 
+    public function test_member_updated_event_carries_diff_via_me_endpoint(): void
+    {
+        Bus::fake();
+        $this->makeSubscription(['member.updated']);
+
+        $member = $this->makeActiveMember();
+        \Laravel\Sanctum\Sanctum::actingAs($member, [], 'member');
+
+        // 初始 nickname null,改成「小明」;phone 保持空 → 只有 nickname 變動
+        $response = $this->putJson('/api/v1/me', [
+            'nickname' => '小明',
+        ]);
+
+        $response->assertStatus(200);
+
+        $event = \App\Models\WebhookEvent::where('event_type', 'member.updated')->first();
+        $this->assertNotNull($event, 'member.updated 事件應該被建立');
+        $this->assertSame($member->uuid, $event->payload['data']['uuid']);
+
+        $changes = $event->payload['data']['changes'];
+        $this->assertArrayHasKey('nickname', $changes);
+        $this->assertNull($changes['nickname']['from']);
+        $this->assertSame('小明', $changes['nickname']['to']);
+    }
+
+    public function test_member_deleted_event_fires_when_destroying_self(): void
+    {
+        Bus::fake();
+        $this->makeSubscription(['member.deleted']);
+
+        $member = $this->makeActiveMember();
+        \Laravel\Sanctum\Sanctum::actingAs($member, [], 'member');
+
+        $response = $this->deleteJson('/api/v1/me');
+        $response->assertStatus(200);
+
+        // soft delete 完成,deleted_at 已寫
+        $this->assertSoftDeleted('members', ['id' => $member->id]);
+
+        $event = \App\Models\WebhookEvent::where('event_type', 'member.deleted')->first();
+        $this->assertNotNull($event, 'member.deleted 事件應該被建立');
+        $this->assertSame($member->uuid, $event->payload['data']['uuid']);
+        $this->assertSame($member->email, $event->payload['data']['email']);
+        $this->assertNotNull(
+            $event->payload['data']['deleted_at'],
+            'payload 應該帶 deleted_at 時戳,讓下游能知道何時刪的',
+        );
+    }
+
+    public function test_member_updated_event_not_fired_when_no_change(): void
+    {
+        Bus::fake();
+        $this->makeSubscription(['member.updated']);
+
+        $member = $this->makeActiveMember();
+        \Laravel\Sanctum\Sanctum::actingAs($member, [], 'member');
+
+        // 送跟目前一模一樣的值 — getDirty 應該是空
+        $this->putJson('/api/v1/me', [
+            'name' => $member->name,
+        ])->assertStatus(200);
+
+        $this->assertDatabaseCount('webhook_events', 0);
+        $this->assertDatabaseCount('webhook_deliveries', 0);
+    }
+
     public function test_oauth_bound_event_carries_provider_metadata(): void
     {
         Bus::fake();
