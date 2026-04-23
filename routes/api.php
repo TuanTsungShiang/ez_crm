@@ -55,6 +55,7 @@ Route::prefix('v1/me')
         Route::post('logout', [MeController::class, 'logout']);
         Route::post('logout-all', [MeController::class, 'logoutAll']);
         Route::delete('/', [MeController::class, 'destroy']);
+        Route::delete('sns/{provider}', [MeController::class, 'unbindSns']);
     });
 
 Route::prefix('v1')
