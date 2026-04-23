@@ -8,13 +8,17 @@
 
 ## 🎯 回來後 **第一件事** 做這個
 
-T6 前端程式碼已寫完,dev server 還開著(`http://localhost:5173`),但**還沒手動測、沒 commit**。
-打開瀏覽器照下面 4 個情境走一輪,都綠了就 commit + merge develop,再接 T5。
+T6 前端程式碼**已 commit + push 到 `feature/me-sns`(commit `bc957bf`)**,但**還沒手動測、沒 merge 到 develop**。
+打開瀏覽器照下面 4 個情境走一輪,都綠了再 merge develop,再接 T5。
 
 ```
-# dev server 若已被殺,重開:
+# 若本機還在,確認分支 + dev server:
 cd /c/code/ez_crm_client
-npm run dev
+git status                 # 應該在 feature/me-sns 且 working tree clean
+npm run dev                # dev server 若已被殺,重開
+
+# 若換台機器,pull 下來:
+git fetch && git checkout feature/me-sns
 ```
 
 ### 要測的 4 個情境(from Claude 的交接訊息)
@@ -24,16 +28,15 @@ npm run dev
 3. **Last login method 擋下**(需 email 未驗證的 SNS-only 帳號測):最後一個 SNS + email 未驗證的狀態,解綁 → 應該看到 A012 紅色錯誤訊息
 4. **偷換帳號防護**(選測):用 A 帳號登入,點綁定 Google,在 popup 用 B 帳號的 Google 登入 → 應看到紅色錯誤「這個 google 帳號對應到另一個 ez_crm 會員」
 
-都 OK 的收尾指令模板:
+都 OK 的收尾指令模板(已 commit,只剩 merge + push + cleanup):
 
 ```bash
 cd /c/code/ez_crm_client
-git add src/api/me.ts src/composables/useOAuthPopup.ts src/views/MeSnsView.vue src/router/index.ts src/views/HomeView.vue src/views/MeView.vue
-git commit -m "feat(me): add /me/sns page — bind via popup + unbind with safety guard"
 git checkout develop
 git merge --no-ff feature/me-sns -m "Merge branch 'feature/me-sns' into develop"
-git branch -d feature/me-sns
 git push origin develop
+git branch -d feature/me-sns
+git push origin --delete feature/me-sns
 ```
 
 ---
@@ -54,9 +57,9 @@ git push origin develop
 - **Full regression: 175 passed / 572 assertions**(上一次是 166)
 - EventServiceProvider 順便清掉一個 unused `use Illuminate\Support\Facades\Event;`
 
-### 前端 — feature/me-sns(程式碼完成,**未 commit**)
+### 前端 — feature/me-sns(已 commit + push,**未 merge develop**)
 
-T6 `/me/sns` 頁已實作完成,尚未 commit。目前在 `feature/me-sns` branch,working tree 有 5 個 modified + 1 個新檔:
+commit `bc957bf` 已推到 `origin/feature/me-sns`。6 個檔案變動:
 
 ```
 modified:   src/api/me.ts                    (新增 unbindSns)
@@ -98,7 +101,7 @@ new file:   src/views/MeSnsView.vue          (主頁面)
 
 #### ez_crm_client(前端)
 ```
-(feature/me-sns 尚未 commit)
+bc957bf  feat(me): add /me/sns page  ← feature/me-sns HEAD(已 push,未 merge)
 c4f3eff  Merge feature/me-edit: /me/edit page + Dashboard tile unlock   ← develop HEAD
 ```
 
@@ -110,7 +113,7 @@ c4f3eff  Merge feature/me-edit: /me/edit page + Dashboard tile unlock   ← deve
 ### 分支衛生
 
 - ez_crm:`develop` clean,no feature branch
-- ez_crm_client:**`feature/me-sns` 還在**(上面有 T6 的 uncommitted 變更)
+- ez_crm_client:**`feature/me-sns` 還在 local + remote**(已 commit,等驗收後 merge develop)
 
 ---
 
