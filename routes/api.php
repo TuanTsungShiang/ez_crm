@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\RegisterSchemaController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Auth\SendEmailOtpController;
+use App\Http\Controllers\Api\V1\Auth\SendPhoneOtpController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
+use App\Http\Controllers\Api\V1\Auth\VerifyPhoneController;
 use App\Http\Controllers\Api\V1\GroupController;
 use App\Http\Controllers\Api\V1\Me\MeController;
 use App\Http\Controllers\Api\V1\MemberController;
@@ -36,6 +38,8 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('register', RegisterController::class);
     Route::post('verify/email/send', SendEmailOtpController::class);
     Route::post('verify/email', VerifyEmailController::class);
+    Route::post('verify/phone/send', SendPhoneOtpController::class);
+    Route::post('verify/phone', VerifyPhoneController::class);
     Route::post('login', LoginController::class);
     Route::post('password/forgot', ForgotPasswordController::class);
     Route::post('password/reset', ResetPasswordController::class);
