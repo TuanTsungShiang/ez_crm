@@ -10,6 +10,11 @@ permissions:
 
 jobs:
   ai-review:
+    # Disabled until OPENAI_API_KEY repo secret is configured.
+    # To re-enable: GitHub repo → Settings → Secrets and variables → Actions
+    # → New repository secret: OPENAI_API_KEY = sk-...
+    # Then remove the `if: false` line below.
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Review PR diff with OpenAI
