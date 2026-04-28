@@ -1,5 +1,7 @@
 # ez_crm
 
+[![PHPUnit](https://github.com/TuanTsungShiang/ez_crm/actions/workflows/phpunit.yml/badge.svg?branch=develop)](https://github.com/TuanTsungShiang/ez_crm/actions/workflows/phpunit.yml)
+
 > **版本：v1.0.0**
 > 詳細變更紀錄見 [CHANGELOG.md](CHANGELOG.md)
 
