@@ -275,6 +275,44 @@ class RbacTest extends TestCase
         $this->assertFalse(\App\Filament\Widgets\WebhookHealthWidget::canView());
     }
 
+    /* -------------------- Filament Resource canViewAny -------------------- */
+
+    public function test_webhook_subscription_resource_hidden_from_customer_support(): void
+    {
+        $this->actingAs($this->userWithRole('customer_support'));
+        $this->assertFalse(\App\Filament\Resources\WebhookSubscriptionResource::canViewAny());
+    }
+
+    public function test_webhook_subscription_resource_visible_to_marketing(): void
+    {
+        $this->actingAs($this->userWithRole('marketing'));
+        $this->assertTrue(\App\Filament\Resources\WebhookSubscriptionResource::canViewAny());
+    }
+
+    public function test_webhook_delivery_resource_hidden_from_customer_support(): void
+    {
+        $this->actingAs($this->userWithRole('customer_support'));
+        $this->assertFalse(\App\Filament\Resources\WebhookDeliveryResource::canViewAny());
+    }
+
+    public function test_webhook_event_resource_hidden_from_customer_support(): void
+    {
+        $this->actingAs($this->userWithRole('customer_support'));
+        $this->assertFalse(\App\Filament\Resources\WebhookEventResource::canViewAny());
+    }
+
+    public function test_notification_delivery_resource_visible_to_marketing(): void
+    {
+        $this->actingAs($this->userWithRole('marketing'));
+        $this->assertTrue(\App\Filament\Resources\NotificationDeliveryResource::canViewAny());
+    }
+
+    public function test_notification_delivery_resource_hidden_from_customer_support(): void
+    {
+        $this->actingAs($this->userWithRole('customer_support'));
+        $this->assertFalse(\App\Filament\Resources\NotificationDeliveryResource::canViewAny());
+    }
+
     /* -------------------- Bootstrap admin sanity check -------------------- */
 
     public function test_bootstrap_admin_is_seeded_with_super_admin_role(): void

@@ -30,6 +30,11 @@ class WebhookEventResource extends Resource
 
     protected static ?int $navigationSort = 30;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('webhook_event.view_any') ?? false;
+    }
+
     public static function table(Table $table): Table
     {
         return $table

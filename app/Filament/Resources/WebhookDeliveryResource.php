@@ -28,6 +28,11 @@ class WebhookDeliveryResource extends Resource
 
     protected static ?int $navigationSort = 20;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('webhook_delivery.view_any') ?? false;
+    }
+
     public static function table(Table $table): Table
     {
         return $table

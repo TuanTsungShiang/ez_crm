@@ -43,6 +43,11 @@ class WebhookSubscriptionResource extends Resource
         ];
     }
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('webhook_subscription.view_any') ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form

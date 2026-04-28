@@ -17,7 +17,9 @@ class TagResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
 
-    protected static ?string $navigationLabel = '標籤管理';
+    protected static ?string $navigationGroup = '會員管理';
+
+    protected static ?string $navigationLabel = '標籤';
 
     protected static ?string $modelLabel = '標籤';
 
