@@ -247,6 +247,34 @@ class RbacTest extends TestCase
         $this->assertTrue($admin->can('delete', $custom));
     }
 
+    /* -------------------- Widget visibility -------------------- */
+
+    public function test_webhook_health_widget_visible_to_roles_with_webhook_delivery_view_any(): void
+    {
+        foreach (['super_admin', 'admin', 'marketing', 'viewer'] as $role) {
+            $user = $this->userWithRole($role);
+            $this->actingAs($user);
+            $this->assertTrue(
+                \App\Filament\Widgets\WebhookHealthWidget::canView(),
+                "{$role} should see WebhookHealthWidget"
+            );
+        }
+    }
+
+    public function test_webhook_health_widget_hidden_from_customer_support(): void
+    {
+        $user = $this->userWithRole('customer_support');
+        $this->actingAs($user);
+
+        $this->assertFalse(\App\Filament\Widgets\WebhookHealthWidget::canView());
+    }
+
+    public function test_webhook_health_widget_hidden_from_guest(): void
+    {
+        // No actingAs — auth()->user() is null
+        $this->assertFalse(\App\Filament\Widgets\WebhookHealthWidget::canView());
+    }
+
     /* -------------------- Bootstrap admin sanity check -------------------- */
 
     public function test_bootstrap_admin_is_seeded_with_super_admin_role(): void

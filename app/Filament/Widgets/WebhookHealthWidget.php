@@ -11,6 +11,11 @@ class WebhookHealthWidget extends BaseWidget
 {
     protected static ?string $pollingInterval = '30s';
 
+    public static function canView(): bool
+    {
+        return auth()->user()?->can('webhook_delivery.view_any') ?? false;
+    }
+
     protected function getStats(): array
     {
         $since = now()->subDay();
@@ -60,11 +65,5 @@ class WebhookHealthWidget extends BaseWidget
         if ($rate >= 99) return 'success';
         if ($rate >= 95) return 'warning';
         return 'danger';
-    }
-
-    public static function canView(): bool
-    {
-        // 只有 Webhooks 相關的 admin 才看得到（目前沒權限系統,一律顯示）
-        return true;
     }
 }
