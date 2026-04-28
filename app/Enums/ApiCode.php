@@ -30,6 +30,7 @@ class ApiCode
     const SNS_ALREADY_BOUND = 'A011';
     const LAST_LOGIN_METHOD = 'A012';
     const PROVIDER_NOT_SUPPORTED = 'A013';
+    const PASSWORD_ALREADY_SET = 'A014';
 
     // N — 資源不存在類
     const NOT_FOUND = 'N001';

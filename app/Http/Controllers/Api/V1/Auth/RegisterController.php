@@ -56,12 +56,13 @@ class RegisterController extends Controller
     {
         $member = DB::transaction(function () use ($request) {
             $member = Member::create([
-                'uuid'     => (string) Str::uuid(),
-                'name'     => $request->name,
-                'email'    => $request->email,
-                'phone'    => $request->phone,
-                'password' => $request->password,
-                'status'   => Member::STATUS_PENDING,
+                'uuid'            => (string) Str::uuid(),
+                'name'            => $request->name,
+                'email'           => $request->email,
+                'phone'           => $request->phone,
+                'password'        => $request->password,
+                'password_set_at' => now(),
+                'status'          => Member::STATUS_PENDING,
             ]);
 
             MemberProfile::create([

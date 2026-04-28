@@ -7,6 +7,7 @@ use App\Events\Webhooks\MemberDeleted;
 use App\Events\Webhooks\MemberUpdated;
 use App\Events\Webhooks\OAuthUnbound;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Me\SetPasswordRequest;
 use App\Http\Requests\Api\V1\Me\UpdateMeRequest;
 use App\Http\Requests\Api\V1\Me\UpdatePasswordRequest;
 use App\Http\Resources\Api\V1\MemberDetailResource;
@@ -126,8 +127,54 @@ class MeController extends Controller
             return $this->error(ApiCode::INVALID_CREDENTIALS, '目前密碼錯誤', 422);
         }
 
-        $member->update(['password' => $request->password]);
+        $member->update([
+            'password'        => $request->password,
+            'password_set_at' => now(),
+        ]);
 
+        $currentTokenId = $request->user()->currentAccessToken()->id;
+        $member->tokens()->where('id', '!=', $currentTokenId)->delete();
+
+        return $this->success(null);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/me/password/set",
+     *     operationId="setMyPassword",
+     *     tags={"Me"},
+     *     summary="OAuth-only 用戶首次設定密碼",
+     *     description="僅供 password_set_at 為 null 的用戶使用(OAuth-only 註冊)。若用戶已設過密碼,回 A014。",
+     *     security={{"member":{}}},
+     *     @OA\RequestBody(required=true,
+     *         @OA\JsonContent(required={"password","password_confirmation"},
+     *             @OA\Property(property="password", type="string", format="password"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="密碼設定成功"),
+     *     @OA\Response(response=403, description="密碼已設過,改走 PUT /me/password"),
+     *     @OA\Response(response=422, description="新密碼不合規則")
+     * )
+     */
+    public function setPassword(SetPasswordRequest $request)
+    {
+        $member = $request->user();
+
+        if ($member->hasLocalPassword()) {
+            return $this->error(
+                ApiCode::PASSWORD_ALREADY_SET,
+                '此帳號已設過密碼,請改走變更密碼流程',
+                403
+            );
+        }
+
+        $member->update([
+            'password'        => $request->password,
+            'password_set_at' => now(),
+        ]);
+
+        // First-time password set — revoke all other tokens for safety.
         $currentTokenId = $request->user()->currentAccessToken()->id;
         $member->tokens()->where('id', '!=', $currentTokenId)->delete();
 

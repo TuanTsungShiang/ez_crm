@@ -18,7 +18,7 @@ class Member extends Authenticatable
 
     protected $fillable = [
         'uuid', 'member_group_id', 'name', 'nickname',
-        'email', 'phone', 'password',
+        'email', 'phone', 'password', 'password_set_at',
         'email_verified_at', 'phone_verified_at',
         'status', 'last_login_at',
     ];
@@ -28,9 +28,19 @@ class Member extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'phone_verified_at' => 'datetime',
+        'password_set_at'   => 'datetime',
         'last_login_at'     => 'datetime',
         'password'          => 'hashed',
     ];
+
+    /**
+     * Whether this member has set a real (user-chosen) password.
+     * False for OAuth-only signups whose password is Str::random placeholder.
+     */
+    public function hasLocalPassword(): bool
+    {
+        return $this->password_set_at !== null;
+    }
 
     public function group()
     {

@@ -41,6 +41,7 @@ class MemberDetailResource extends JsonResource
                 ])
             ),
             'has_sns'           => $this->whenCounted('sns', fn() => $this->sns_count > 0),
+            'has_local_password' => $this->password_set_at !== null,
             'last_login_at'     => $this->last_login_at?->toIso8601String(),
             'created_at'        => $this->created_at->toIso8601String(),
             'updated_at'        => $this->updated_at->toIso8601String(),

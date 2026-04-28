@@ -56,6 +56,7 @@ Route::prefix('v1/me')
         Route::get('/', [MeController::class, 'show']);
         Route::put('/', [MeController::class, 'update']);
         Route::put('password', [MeController::class, 'updatePassword']);
+        Route::post('password/set', [MeController::class, 'setPassword']);
         Route::post('logout', [MeController::class, 'logout']);
         Route::post('logout-all', [MeController::class, 'logoutAll']);
         Route::delete('/', [MeController::class, 'destroy']);

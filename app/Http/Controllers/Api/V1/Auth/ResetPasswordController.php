@@ -53,7 +53,10 @@ class ResetPasswordController extends Controller
             return $this->error(ApiCode::INVALID_CODE, '驗證碼錯誤或已過期', 422);
         }
 
-        $member->update(['password' => $request->password]);
+        $member->update([
+            'password'        => $request->password,
+            'password_set_at' => now(),
+        ]);
         $member->tokens()->delete();
 
         return $this->success(null);
