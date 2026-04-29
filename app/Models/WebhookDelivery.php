@@ -35,12 +35,12 @@ class WebhookDelivery extends Model
         'created_at'    => 'datetime',
     ];
 
-    public function webhookEvent()
+    public function webhookEvent(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(WebhookEvent::class);
     }
 
-    public function subscription()
+    public function subscription(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(WebhookSubscription::class, 'subscription_id');
     }

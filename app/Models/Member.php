@@ -42,42 +42,42 @@ class Member extends Authenticatable
         return $this->password_set_at !== null;
     }
 
-    public function group()
+    public function group(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(MemberGroup::class, 'member_group_id');
     }
 
-    public function profile()
+    public function profile(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(MemberProfile::class);
     }
 
-    public function sns()
+    public function sns(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MemberSns::class);
     }
 
-    public function tags()
+    public function tags(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'member_tag')->withPivot('created_at');
     }
 
-    public function verifications()
+    public function verifications(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MemberVerification::class);
     }
 
-    public function addresses()
+    public function addresses(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MemberAddress::class);
     }
 
-    public function loginHistories()
+    public function loginHistories(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MemberLoginHistory::class);
     }
 
-    public function devices()
+    public function devices(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MemberDevice::class);
     }

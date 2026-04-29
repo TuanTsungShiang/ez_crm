@@ -20,7 +20,7 @@ class MemberSns extends Model
         'token_expires_at' => 'datetime',
     ];
 
-    public function member()
+    public function member(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Member::class);
     }

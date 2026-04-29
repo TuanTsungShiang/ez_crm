@@ -4,7 +4,11 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
+/**
+ * @mixin LengthAwarePaginator
+ */
 class MemberCollection extends ResourceCollection
 {
     public function withResponse($request, $response)
