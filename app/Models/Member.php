@@ -20,7 +20,7 @@ class Member extends Authenticatable
         'uuid', 'member_group_id', 'name', 'nickname',
         'email', 'phone', 'password', 'password_set_at',
         'email_verified_at', 'phone_verified_at',
-        'status', 'last_login_at',
+        'status', 'last_login_at', 'points',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -31,6 +31,7 @@ class Member extends Authenticatable
         'password_set_at'   => 'datetime',
         'last_login_at'     => 'datetime',
         'password'          => 'hashed',
+        'points'            => 'integer',
     ];
 
     /**
@@ -80,6 +81,11 @@ class Member extends Authenticatable
     public function devices(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(MemberDevice::class);
+    }
+
+    public function pointTransactions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PointTransaction::class);
     }
 
     public function hasVerifiedEmail(): bool
