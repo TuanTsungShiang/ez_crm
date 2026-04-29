@@ -1,8 +1,8 @@
 # Points 點數系統 整合計畫(Phase 2.1)
 
-> 版本:v0.1 (DRAFT)
+> 版本:v1.0(Accepted)
 > 建立日期:2026-04-29
-> 狀態:📋 Draft — 待 Kevin review 後升 v1.0
+> 狀態:✅ Accepted — 6 個 review 問題已 Kevin 拍板,可進實作
 > 對應 Roadmap:SENIOR_ROADMAP Phase 2.1
 > 預估實作:**5–7 個工作天**(Phase 2.1 範圍,不含 Coupon / Order)
 > 預定起跑日:2026-05-06(W2 完成 + 緩衝後)
@@ -89,13 +89,18 @@ Schema::create('point_transactions', function (Blueprint $table) {
     // Polymorphic 來源(Order / Coupon / Manual)
     $table->nullableMorphs('source');
 
+    // Phase 2.5 預留:過期日(v1.0 schema 已加,logic 留 Phase 2.5 才實作)
+    $table->timestamp('expires_at')->nullable()
+        ->comment('Phase 2.5 啟用:此筆 earn transaction 的點數何時過期。null = 永不過期');
+
     $table->json('meta')->nullable()
-        ->comment('額外 context,例:order snapshot / 過期日');
+        ->comment('額外 context,例:order snapshot');
 
     $table->timestamps();
 
     $table->index(['member_id', 'created_at']);
     $table->index(['type', 'created_at']);
+    $table->index('expires_at');  // Phase 2.5 cron 掃過期用
 });
 ```
 
@@ -147,7 +152,9 @@ Schema::create('point_transactions', function (Blueprint $table) {
 ### 4.2 `POST /api/v1/members/{uuid}/points/adjust`(admin 用)
 
 **Auth**:`auth:sanctum`
-**Permission**:新增 `points.manage`(spatie permission baseline 加 → super_admin / admin)
+**Permission**:新增 `points.manage`(spatie permission baseline 加 → super_admin / admin / **marketing**)
+
+> 為什麼 marketing 也給:行銷活動常需要主動送點數(滿千送百 / 生日禮 / 補償),由 marketing 直接操作比每次找 admin 快。但所有操作仍走 audit log + webhook event,事後可追蹤。
 
 **Request Header**:`Idempotency-Key: <uuid v4>` (required)
 
@@ -275,12 +282,19 @@ payload 結構:
     "amount": 100,
     "balance_after": 1350,
     "type": "earn",
-    "reason": "訂單 #1024 完成"
+    "reason": "訂單 #1024 完成",
+    "actor": {
+      "id": 12,
+      "type": "user",
+      "name": "Marketing Lead"
+    }
   }
 }
 ```
 
-下游用途:行銷自動化(達 1000 點寄通知)/ 客服 dashboard / BI。
+下游用途:行銷自動化(達 1000 點寄通知)/ 客服 dashboard / BI / **稽核(誰調了誰的點數)**。
+
+> `actor` 帶基本識別資訊(id / type / name),不含 email / 個資 — 下游只需要知道「誰執行的」即可,深查走後台 audit log。
 
 ---
 
@@ -406,18 +420,25 @@ public function test_same_idempotency_key_returns_same_transaction()
 
 ---
 
-## 十一、不在 v0.1 範圍但**待 review 對齊**
+## 十一、Review 決議紀錄(2026-04-29 拍板)
 
-請 Kevin 在這幾個決策上 thumbs up / 修正:
+| # | 議題 | 決議 | 備註 |
+|---|---|---|---|
+| 1 | `amount` 型別 | ✅ `bigInteger` | 整數點數,無小數需求 |
+| 2 | 單筆 adjust 上限 | ✅ 1,000,000 點 | 超過走 confirm endpoint(留 stretch)|
+| 3 | `points.manage` permission 受眾 | ✅ super_admin + admin + **marketing** | 行銷需主動送點(滿千送百 / 生日禮 / 補償),但所有操作走 audit log + webhook event,事後可追蹤 |
+| 4 | 「會員自己 spend」前台 endpoint | ✅ 不做 | 等 Order/Coupon Phase 才有業務場景 |
+| 5 | `PointAdjusted` event 帶 actor | ✅ 帶(id + type + name) | 不含個資;稽核需求(誰調了誰的點數)是 senior 級設計訊號 |
+| 6 | 過期機制 | ✅ schema 預留 `expires_at` 欄位 + index,**logic 留 Phase 2.5** | Phase 2.1 不寫 cron 掃過期、不寫 FIFO 扣點;但 schema 就位避免 Phase 2.5 還要做 migration |
 
-1. **`amount` 用 `bigInteger` 不用 `decimal`** — 點數是「整數」單位(沒 0.5 點),節省 storage + 索引。OK?
-2. **預設 1_000_000 單筆上限** — 防呆,但 marketing 大方送 100 萬點 / 客戶會員 case 怎麼辦?(走另一個確認 endpoint?)
-3. **`points.manage` permission** 給 super_admin + admin,**不給 customer_support / marketing** — 因為這是「動錢/類錢」操作,需要 audit 等級高的角色。OK?
-4. **不開「會員自己 spend」的 me endpoint** — 等 Order/Coupon 才有業務場景。OK?
-5. **`PointAdjusted` event 不帶 actor 個資**(只 member_uuid + balance + reason)— 隱私考量。OK?
-6. **過期機制完全不做** — 業務上你的 ez_crm 客戶會員需要嗎?如要,馬上加 schema 的 `expires_at` 欄位,但 logic 留 Phase 2.5。
+決議影響到本 plan 的章節:
+- Section 3.2 — `point_transactions.expires_at` 欄位 + index 加進 schema
+- Section 4.2 — Permission 註解補上 marketing 也有 `points.manage`
+- Section 5.5 — Webhook event payload 加 `actor: {id, type, name}` 物件
 
-回答這 6 個 → v0.1 升 v1.0 進實作。
+對應實作影響:
+- `RolePermissionSeeder` 的 `marketing` role permission 列表要加 `points.manage`(Phase 2.1 動工 Day 3 處理)
+- `PointAdjusted` event 建構子帶 `User $actor`(non-null,system context 用 system pseudo-user)
 
 ---
 
