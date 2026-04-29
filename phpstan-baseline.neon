@@ -1,0 +1,301 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Match expression does not handle remaining values\\: int\\<min, \\-1\\>\\|int\\<3, max\\>$#"
+			count: 2
+			path: app/Filament/Resources/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\WebhookDelivery\\:\\:\\$subscription\\.$#"
+			count: 1
+			path: app/Filament/Resources/WebhookDeliveryResource.php
+
+		-
+			message: "#^Call to an undefined method Laravel\\\\Socialite\\\\Contracts\\\\Provider\\:\\:stateless\\(\\)\\.$#"
+			count: 2
+			path: app/Http/Controllers/Api/V1/Auth/OAuthController.php
+
+		-
+			message: "#^Access to an undefined property Laravel\\\\Sanctum\\\\Contracts\\\\HasAbilities\\:\\:\\$id\\.$#"
+			count: 2
+			path: app/Http/Controllers/Api/V1/Me/MeController.php
+
+		-
+			message: "#^Call to an undefined method Laravel\\\\Sanctum\\\\Contracts\\\\HasAbilities\\:\\:delete\\(\\)\\.$#"
+			count: 1
+			path: app/Http/Controllers/Api/V1/Me/MeController.php
+
+		-
+			message: "#^Access to an undefined property \\(object\\|string\\)\\:\\:\\$id\\.$#"
+			count: 1
+			path: app/Http/Requests/Api/V1/GroupUpdateRequest.php
+
+		-
+			message: "#^Access to an undefined property \\(object\\|string\\)\\:\\:\\$id\\.$#"
+			count: 1
+			path: app/Http/Requests/Api/V1/MemberUpdateRequest.php
+
+		-
+			message: "#^Access to an undefined property \\(object\\|string\\)\\:\\:\\$id\\.$#"
+			count: 1
+			path: app/Http/Requests/Api/V1/TagUpdateRequest.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\GroupResource\\:\\:\\$created_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/GroupResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\GroupResource\\:\\:\\$description\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/GroupResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\GroupResource\\:\\:\\$id\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/GroupResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\GroupResource\\:\\:\\$name\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/GroupResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\GroupResource\\:\\:\\$sort_order\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/GroupResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\GroupResource\\:\\:\\$updated_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/GroupResource.php
+
+		-
+			message: "#^Call to an undefined method App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberCollection\\:\\:currentPage\\(\\)\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberCollection.php
+
+		-
+			message: "#^Call to an undefined method App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberCollection\\:\\:lastPage\\(\\)\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberCollection.php
+
+		-
+			message: "#^Call to an undefined method App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberCollection\\:\\:perPage\\(\\)\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberCollection.php
+
+		-
+			message: "#^Call to an undefined method App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberCollection\\:\\:total\\(\\)\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberCollection.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$created_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$email\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$email_verified_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$group\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$last_login_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$name\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$nickname\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$password_set_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$phone\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$phone_verified_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$profile\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$sns\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$sns_count\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$status\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$tags\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$updated_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberDetailResource\\:\\:\\$uuid\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberDetailResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$created_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$email\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$group\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$last_login_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$name\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$nickname\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$phone\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$sns_count\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$status\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$tags\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\MemberResource\\:\\:\\$uuid\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/MemberResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\TagResource\\:\\:\\$color\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/TagResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\TagResource\\:\\:\\$created_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/TagResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\TagResource\\:\\:\\$description\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/TagResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\TagResource\\:\\:\\$id\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/TagResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\TagResource\\:\\:\\$name\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/TagResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Http\\\\Resources\\\\Api\\\\V1\\\\TagResource\\:\\:\\$updated_at\\.$#"
+			count: 1
+			path: app/Http/Resources/Api/V1/TagResource.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\WebhookDelivery\\:\\:\\$subscription\\.$#"
+			count: 1
+			path: app/Jobs/SendWebhookJob.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\WebhookDelivery\\:\\:\\$webhookEvent\\.$#"
+			count: 1
+			path: app/Jobs/SendWebhookJob.php
+
+		-
+			message: "#^Relation 'subscription' is not found in App\\\\Models\\\\WebhookDelivery model\\.$#"
+			count: 1
+			path: app/Jobs/SendWebhookJob.php
+
+		-
+			message: "#^Relation 'webhookEvent' is not found in App\\\\Models\\\\WebhookDelivery model\\.$#"
+			count: 1
+			path: app/Jobs/SendWebhookJob.php
+
+		-
+			message: "#^Relation 'group' is not found in App\\\\Models\\\\Member model\\.$#"
+			count: 1
+			path: app/Services/MemberSearchService.php
+
+		-
+			message: "#^Relation 'profile' is not found in App\\\\Models\\\\Member model\\.$#"
+			count: 1
+			path: app/Services/MemberSearchService.php
+
+		-
+			message: "#^Relation 'tags' is not found in App\\\\Models\\\\Member model\\.$#"
+			count: 1
+			path: app/Services/MemberSearchService.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\MemberSns\\:\\:\\$member\\.$#"
+			count: 1
+			path: app/Services/OAuth/OAuthService.php

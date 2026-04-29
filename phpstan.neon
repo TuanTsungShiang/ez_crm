@@ -1,0 +1,16 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+
+    paths:
+        - app
+        - database/seeders
+
+    excludePaths:
+        - bootstrap/cache
+
+    # Filament dynamic Form/Table builder confuses level 6+ heavily.
+    # Re-enable per-path coverage as we level up.

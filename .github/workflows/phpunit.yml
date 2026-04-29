@@ -50,6 +50,9 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
+      - name: PHPStan (Larastan level 5 + baseline)
+        run: vendor/bin/phpstan analyse --memory-limit=512M --no-progress --error-format=github
+
       - name: Prepare .env
         run: |
           cp .env.example .env
