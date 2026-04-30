@@ -1,7 +1,8 @@
 # Points 點數系統 整合計畫(Phase 2.1)
 
-> 版本:v1.0(Accepted)
+> 版本:v1.1(Accepted)
 > 建立日期:2026-04-29
+> 最近更新:2026-04-30 — 補入 §9.4 多前台研究(linky_360 考古成果)
 > 狀態:✅ Accepted — 6 個 review 問題已 Kevin 拍板,可進實作
 > 對應 Roadmap:SENIOR_ROADMAP Phase 2.1
 > 預估實作:**5–7 個工作天**(Phase 2.1 範圍,不含 Coupon / Order)
@@ -401,6 +402,94 @@ public function test_same_idempotency_key_returns_same_transaction()
 ### Outbox / 跨服務(Phase 3+)
 - `point_transactions` 已是 audit log,可以是事件 outbox 的 source
 - Phase 3 Queue 後做 async webhook 不卡 transaction commit
+
+### 9.4 多前台支援(未來考量,待決議,Phase 3+)
+
+> **背景**:2026-04-30 對 linky_360_xampp 的 schema 考古,確認該系統採「**全域會員 + 雙層 AID 映射**」實現多前台共享/獨立點數池可切換。本節記錄研究成果與 ez_crm 的對應決策,**不在 Phase 2.1 實作**。
+
+#### 9.4.1 三種會員 ↔ 點數關係模型
+
+| 模式 | 會員歸屬 | 點數計算 | 範例 |
+|---|---|---|---|
+| **A** scoped | 每前台各自一套 members | 自然分離 | 子公司各自獨立 |
+| **B** 全域分計 | 全域 members | per-frontend balance | Marriott 多品牌 |
+| **C** 全域共用 | 全域 members | 集團通用點數 | Costco / Amazon Prime |
+
+**目前 ez_crm 實質上是模式 C 的單前台特例**(沒 frontend_id,members 全域)。
+
+#### 9.4.2 linky_360 的設計判讀
+
+**核心抽象 — 三表雙層映射**:
+
+```
+members (全域,無 tenant_id)
+   ↓
+register_channel
+   service_code (前台入口) ──映射──→ points_AID (點數池)
+   N : 1 → 點數池共享
+   1 : 1 → 點數池獨立
+   ↓
+members_points (m_id, aid=points_AID, year, points) — 餘額表
+points_manage_log (m_id, aid=service_code, aid_target=points_AID, ...) — 交易紀錄
+```
+
+**關鍵巧思**:換點數策略 = 改 `register_channel` 一筆資料,**不用 schema migration**。
+
+**值得抄的設計**:
+- ✅ 「點數池路由表」抽象比直接 `transaction.frontend_id` 優雅
+- ✅ 配置驅動:N:M 關係靠資料,不靠 code
+
+**要避開的雷**:
+- ❌ 沒 FK(`members_points.aid` → `register_channel.service_code` 純靠應用層)
+- ❌ aid → aid_target 路由邏輯散在多處(`back/function/class.php` + `jsonapi/objects/points.php`)
+- ❌ 沒 idempotency_key,重發保護靠 try-catch
+- ❌ 用 `year` 欄位 + 整年扣除做過期(過時)
+
+#### 9.4.3 ez_crm 真要做時的擴展路線
+
+**不要**直接在 `point_transactions` 加 `frontend_id` — 沒設計餘地、單 frontend 的點數池模型也表達不出來。
+
+**要做**:加抽象層,不污染現有 schema:
+
+```sql
+-- 新表:點數池(類比 linky_360 的 register_channel.points_AID)
+CREATE TABLE point_pools (
+  id BIGINT PRIMARY KEY,
+  name VARCHAR(100),
+  default_currency VARCHAR(10),
+  ...
+);
+
+-- 新表:前台 ↔ 點數池映射(N:M)
+CREATE TABLE frontend_pool_map (
+  frontend_id BIGINT,
+  pool_id BIGINT FK point_pools.id,
+  PRIMARY KEY (frontend_id, pool_id)
+);
+
+-- 改現有表:
+ALTER TABLE point_transactions ADD pool_id BIGINT FK point_pools.id;
+ALTER TABLE members           ADD primary_pool_id BIGINT FK point_pools.id; -- 可選:預設值
+
+-- 視模式拆 balance:
+-- 模式 C(共用):members.points 保留為主 pool 餘額
+-- 模式 B(分計):members.points 廢除,改 member_balances(member_id, pool_id, points)
+```
+
+**遷移路線**(若日後決定走 B):
+1. 新增 `point_pools` + 預設一筆 "default"(對應現有單一前台)
+2. 回填 `point_transactions.pool_id = 1`(default pool)
+3. 引入 `member_balances` 表,從 `members.points` migrate
+4. `PointService::adjust()` 簽名加 `?Pool $pool = null`,預設用 member 的 primary_pool
+
+#### 9.4.4 何時觸發決策
+
+下列任一發生就要重啟此議題:
+- ez_crm 第 2 個前台需求出現(目前只服務一套)
+- 跟 linky_360 / 其他公司平台整合的合作案出現
+- 客戶提出「集團通用紅利」需求
+
+在那之前,**maintain 一張表(`point_pools`)**也許會比加 `pool_id` 欄位先做 — 純準備資料模型,先一個 default pool,降低未來 migration 衝擊。但**這也是 YAGNI 邊緣**,Phase 2.1 不做。
 
 ---
 
