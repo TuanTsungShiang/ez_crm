@@ -36,6 +36,10 @@ class ApiCode
     const NOT_FOUND = 'N001';
     const ENDPOINT_NOT_FOUND = 'N002';
 
+    // B — 業務邏輯類
+    const INSUFFICIENT_POINTS = 'B001';
+    const IDEMPOTENCY_REPLAY  = 'B002';
+
     // I — 內部錯誤類
     const UNKNOWN_ERROR = 'I000';
 
