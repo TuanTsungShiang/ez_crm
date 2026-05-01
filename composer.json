@@ -53,6 +53,9 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
+        ],
+        "post-install-cmd": [
+            "@php -r \"if (file_exists('.git')) { shell_exec('git config core.hooksPath .githooks'); chmod('.githooks/pre-commit', 0755); chmod('.githooks/commit-msg', 0755); echo 'Git hooks installed.\\n'; }\""
         ]
     },
     "extra": {

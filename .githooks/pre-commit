@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ── Pint: auto-fix staged PHP files ──────────────────────────────────────────
+STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACM | grep '\.php$' || true)
+
+if [ -n "$STAGED_PHP" ]; then
+    echo "🔍  Pint: checking staged PHP files..."
+    echo "$STAGED_PHP" | xargs ./vendor/bin/pint --dirty 2>&1
+
+    # Re-stage any files Pint auto-fixed so the fix lands in the commit
+    echo "$STAGED_PHP" | xargs git add
+    echo "✅  Pint done."
+fi
+
+exit 0
