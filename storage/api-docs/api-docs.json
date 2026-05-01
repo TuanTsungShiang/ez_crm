@@ -190,7 +190,7 @@
                     "Auth"
                 ],
                 "summary": "OAuth provider callback（provider 在授權後導回這裡）",
-                "description": "目前回傳 JSON；整合 SPA 時會改回 HTML + postMessage。",
+                "description": "回傳 HTML + postMessage 給 popup 呼叫端（SPA 前端）。查詢時可加 ?format=json 得到原 JSON 行為。",
                 "operationId": "oauthCallback",
                 "parameters": [
                     {
@@ -200,48 +200,23 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "json = 回 JSON（for tests/direct API）",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "json"
+                            ]
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "登入成功",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "code": {
-                                            "type": "string",
-                                            "example": "S200"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "token": {
-                                                    "type": "string"
-                                                },
-                                                "member": {
-                                                    "type": "object"
-                                                },
-                                                "is_new_account": {
-                                                    "type": "boolean"
-                                                },
-                                                "newly_bound": {
-                                                    "type": "boolean"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "OAuth 授權失敗"
+                        "description": "登入成功。format=json 時回 JSON;否則回 HTML（帶 postMessage 腳本）"
                     }
                 }
             }
@@ -521,6 +496,46 @@
                 }
             }
         },
+        "/auth/verify/phone/send": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "寄 OTP 到手機",
+                "description": "跟 /auth/verify/email/send 對稱;dev 用 LogDriver 不會真的發。",
+                "operationId": "sendPhoneOtp",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0912345678"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "已寄出(或假裝已寄出,不透露 phone 是否存在)"
+                    },
+                    "409": {
+                        "description": "該手機已驗證過"
+                    },
+                    "429": {
+                        "description": "發送過於頻繁"
+                    }
+                }
+            }
+        },
         "/auth/verify/email": {
             "post": {
                 "tags": [
@@ -596,6 +611,50 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "驗證碼錯誤或過期"
+                    }
+                }
+            }
+        },
+        "/auth/verify/phone": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "驗證手機 OTP(僅 mark phone_verified_at,不發 token)",
+                "description": "Phone 驗證不等於登入 — 只把 phone_verified_at 打開。想用 phone 登入等 Phase 8.x 再擴。",
+                "operationId": "verifyPhone",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "code"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0912345678"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "maxLength": 6,
+                                        "minLength": 6,
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "驗證成功"
                     },
                     "422": {
                         "description": "驗證碼錯誤或過期"
@@ -1277,6 +1336,56 @@
                 ]
             }
         },
+        "/me/password/set": {
+            "post": {
+                "tags": [
+                    "Me"
+                ],
+                "summary": "OAuth-only 用戶首次設定密碼",
+                "description": "僅供 password_set_at 為 null 的用戶使用(OAuth-only 註冊)。若用戶已設過密碼,回 A014。",
+                "operationId": "setMyPassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "密碼設定成功"
+                    },
+                    "403": {
+                        "description": "密碼已設過,改走 PUT /me/password"
+                    },
+                    "422": {
+                        "description": "新密碼不合規則"
+                    }
+                },
+                "security": [
+                    {
+                        "member": []
+                    }
+                ]
+            }
+        },
         "/me/logout": {
             "post": {
                 "tags": [
@@ -1314,6 +1423,43 @@
                     },
                     "401": {
                         "description": "未認證"
+                    }
+                },
+                "security": [
+                    {
+                        "member": []
+                    }
+                ]
+            }
+        },
+        "/me/sns/{provider}": {
+            "delete": {
+                "tags": [
+                    "Me"
+                ],
+                "summary": "解除綁定第三方登入",
+                "description": "擋下「最後一個登入方式」的解綁:若這是最後一個 SNS 且 email 未驗證過,禁止解綁(A012 LAST_LOGIN_METHOD)—— 避免使用者把自己鎖在外面。有驗證過的 email 可以透過忘記密碼救回,所以允許解綁。",
+                "operationId": "unbindOAuthProvider",
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "description": "google / github / line / discord",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "解綁成功"
+                    },
+                    "404": {
+                        "description": "未綁定此 provider"
+                    },
+                    "409": {
+                        "description": "A012 — 最後登入方式,不可解綁"
                     }
                 },
                 "security": [

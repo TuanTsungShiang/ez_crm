@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\MemberResource\Pages;
+use App\Filament\Resources\MemberResource\RelationManagers\PointTransactionsRelationManager;
 use App\Models\Member;
 use App\Models\MemberGroup;
 use App\Models\Tag;
@@ -149,6 +150,14 @@ class MemberResource extends Resource
                     ->label('標籤')
                     ->badge()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('points')
+                    ->label('點數')
+                    ->numeric()
+                    ->sortable()
+                    ->formatStateUsing(fn (int $state): string => number_format($state))
+                    ->color(fn (int $state): string => $state > 0 ? 'success' : 'gray')
+                    ->badge(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('建立時間')
                     ->dateTime('Y-m-d H:i')
@@ -186,7 +195,9 @@ class MemberResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            PointTransactionsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
