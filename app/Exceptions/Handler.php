@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use App\Enums\ApiCode;
+use App\Exceptions\Points\InsufficientPointsException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
@@ -50,6 +51,14 @@ class Handler extends ExceptionHandler
                     'code'    => ApiCode::ENDPOINT_NOT_FOUND,
                     'message' => 'Endpoint not found',
                 ], 404);
+            }
+
+            if ($e instanceof InsufficientPointsException) {
+                return response()->json([
+                    'success' => false,
+                    'code'    => ApiCode::INSUFFICIENT_POINTS,
+                    'message' => 'Insufficient points balance',
+                ], 422);
             }
         }
 

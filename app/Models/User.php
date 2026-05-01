@@ -20,6 +20,14 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasPermissionTo('panel.access');
     }
 
+    // Spatie resolves guard from current auth context (e.g. 'sanctum' for API routes).
+    // All our permissions/roles use guard_name='web', so we pin it here to avoid
+    // "permission not found for guard sanctum" errors on API endpoints.
+    public function getDefaultGuardName(): string
+    {
+        return 'web';
+    }
+
     /**
      * The attributes that are mass assignable.
      *

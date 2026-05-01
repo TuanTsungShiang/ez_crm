@@ -41,4 +41,14 @@ class MemberPolicy
     {
         return $user->can('member.delete');
     }
+
+    public function viewPoints(User $user, Member $member): bool
+    {
+        return $user->can('points.view');
+    }
+
+    public function managePoints(User $user, Member $member): bool
+    {
+        return $user->can('points.manage');
+    }
 }

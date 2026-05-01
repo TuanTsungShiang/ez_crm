@@ -71,6 +71,9 @@ class RolePermissionSeeder extends Seeder
 
             'notification_delivery.view_any',
 
+            'points.view',
+            'points.manage',
+
             'user.view_any',
             'user.manage',
 
@@ -101,6 +104,7 @@ class RolePermissionSeeder extends Seeder
                 'webhook_delivery.view_any', 'webhook_delivery.retry',
                 'webhook_event.view_any',
                 'notification_delivery.view_any',
+                'points.view', 'points.manage',
             ],
 
             'customer_support' => [
@@ -108,6 +112,7 @@ class RolePermissionSeeder extends Seeder
                 'member.view_any', 'member.view', 'member.update',
                 'member_group.view_any',
                 'tag.view_any',
+                'points.view',
             ],
 
             'marketing' => [
@@ -119,6 +124,7 @@ class RolePermissionSeeder extends Seeder
                 'webhook_delivery.view_any',
                 'webhook_event.view_any',
                 'notification_delivery.view_any',
+                'points.view', 'points.manage',
             ],
 
             'viewer' => [
@@ -130,6 +136,7 @@ class RolePermissionSeeder extends Seeder
                 'webhook_delivery.view_any',
                 'webhook_event.view_any',
                 'notification_delivery.view_any',
+                'points.view',
             ],
         ];
     }

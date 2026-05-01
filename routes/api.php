@@ -12,7 +12,9 @@ use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\V1\Auth\VerifyPhoneController;
 use App\Http\Controllers\Api\V1\GroupController;
 use App\Http\Controllers\Api\V1\Me\MeController;
+use App\Http\Controllers\Api\V1\Me\MePointsController;
 use App\Http\Controllers\Api\V1\MemberController;
+use App\Http\Controllers\Api\V1\MemberPointsController;
 use App\Http\Controllers\Api\V1\TagController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -61,6 +63,9 @@ Route::prefix('v1/me')
         Route::post('logout-all', [MeController::class, 'logoutAll']);
         Route::delete('/', [MeController::class, 'destroy']);
         Route::delete('sns/{provider}', [MeController::class, 'unbindSns']);
+
+        // Points
+        Route::get('points', [MePointsController::class, 'show']);
     });
 
 Route::prefix('v1')
@@ -71,6 +76,10 @@ Route::prefix('v1')
         Route::get('members/{member:uuid}', [MemberController::class, 'show']);
         Route::put('members/{member:uuid}', [MemberController::class, 'update']);
         Route::delete('members/{member:uuid}', [MemberController::class, 'destroy']);
+
+        // Points (admin)
+        Route::get('members/{member:uuid}/points', [MemberPointsController::class, 'show']);
+        Route::post('members/{member:uuid}/points/adjust', [MemberPointsController::class, 'adjust']);
 
         // Groups
         Route::apiResource('groups', GroupController::class);
