@@ -9,6 +9,7 @@ use App\Events\Webhooks\MemberUpdated;
 use App\Events\Webhooks\MemberVerifiedEmail;
 use App\Events\Webhooks\OAuthBound;
 use App\Events\Webhooks\OAuthUnbound;
+use App\Events\Webhooks\PointAdjusted;
 use App\Listeners\DispatchWebhook;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -41,6 +42,7 @@ class EventServiceProvider extends ServiceProvider
         MemberLoggedIn::class      => [DispatchWebhook::class],
         OAuthBound::class          => [DispatchWebhook::class],
         OAuthUnbound::class        => [DispatchWebhook::class],
+        PointAdjusted::class       => [DispatchWebhook::class],
     ];
 
     /**
