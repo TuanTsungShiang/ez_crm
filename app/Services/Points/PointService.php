@@ -7,6 +7,7 @@ use App\Exceptions\Points\InsufficientPointsException;
 use App\Models\Member;
 use App\Models\PointTransaction;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -54,35 +55,48 @@ class PointService
             return $existing;
         }
 
-        return DB::transaction(function () use ($member, $amount, $reason, $type, $idempotencyKey, $source) {
-            $locked = Member::lockForUpdate()->findOrFail($member->id);
+        try {
+            return DB::transaction(function () use ($member, $amount, $reason, $type, $idempotencyKey, $source) {
+                $locked = Member::lockForUpdate()->findOrFail($member->id);
 
-            $newBalance = $locked->points + $amount;
-            if ($newBalance < 0) {
-                throw new InsufficientPointsException($locked->id, $locked->points, $amount);
+                $newBalance = $locked->points + $amount;
+                if ($newBalance < 0) {
+                    throw new InsufficientPointsException($locked->id, $locked->points, $amount);
+                }
+
+                $actorId   = auth()->id();
+                $actorType = $actorId ? PointTransaction::ACTOR_USER : PointTransaction::ACTOR_SYSTEM;
+
+                $tx = PointTransaction::create([
+                    'member_id'       => $locked->id,
+                    'amount'          => $amount,
+                    'balance_after'   => $newBalance,
+                    'type'            => $type,
+                    'reason'          => $reason,
+                    'idempotency_key' => $idempotencyKey,
+                    'actor_id'        => $actorId,
+                    'actor_type'      => $actorType,
+                    'source_type'     => $source ? $source::class : null,
+                    'source_id'       => $source?->getKey(),
+                ]);
+
+                $locked->update(['points' => $newBalance]);
+
+                event(new PointAdjusted($locked, $tx));
+
+                return $tx;
+            });
+        } catch (QueryException $e) {
+            // Two concurrent requests with the same idempotency_key both passed
+            // the fast-fail check above and raced into the transaction. The one
+            // that lost the INSERT race hits the DB UNIQUE constraint (SQLSTATE
+            // 23000). Treat it identically to a pre-transaction replay: return
+            // the winner's row without rethrowing.
+            if ($e->getCode() === '23000') {
+                return PointTransaction::where('idempotency_key', $idempotencyKey)->firstOrFail();
             }
 
-            $actorId   = auth()->id();
-            $actorType = $actorId ? PointTransaction::ACTOR_USER : PointTransaction::ACTOR_SYSTEM;
-
-            $tx = PointTransaction::create([
-                'member_id'       => $locked->id,
-                'amount'          => $amount,
-                'balance_after'   => $newBalance,
-                'type'            => $type,
-                'reason'          => $reason,
-                'idempotency_key' => $idempotencyKey,
-                'actor_id'        => $actorId,
-                'actor_type'      => $actorType,
-                'source_type'     => $source ? $source::class : null,
-                'source_id'       => $source?->getKey(),
-            ]);
-
-            $locked->update(['points' => $newBalance]);
-
-            event(new PointAdjusted($locked, $tx));
-
-            return $tx;
-        });
+            throw $e;
+        }
     }
 }
