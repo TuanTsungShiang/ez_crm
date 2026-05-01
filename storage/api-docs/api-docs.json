@@ -1469,6 +1469,116 @@
                 ]
             }
         },
+        "/me/points": {
+            "get": {
+                "tags": [
+                    "Me"
+                ],
+                "summary": "查看自己的點數",
+                "description": "前台會員查看自己的點數餘額與交易明細（分頁）。",
+                "operationId": "getMePoints",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "頁碼",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "查詢成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "S200"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "balance": {
+                                                    "type": "integer",
+                                                    "example": 1250
+                                                },
+                                                "transactions": {
+                                                    "properties": {
+                                                        "data": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 42
+                                                                    },
+                                                                    "amount": {
+                                                                        "type": "integer",
+                                                                        "example": 100
+                                                                    },
+                                                                    "balance_after": {
+                                                                        "type": "integer",
+                                                                        "example": 1250
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string",
+                                                                        "example": "earn"
+                                                                    },
+                                                                    "reason": {
+                                                                        "type": "string",
+                                                                        "example": "訂單完成加點"
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 18
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未認證"
+                    }
+                },
+                "security": [
+                    {
+                        "memberSanctum": []
+                    }
+                ]
+            }
+        },
         "/members": {
             "get": {
                 "tags": [
@@ -2451,6 +2561,307 @@
                 ]
             }
         },
+        "/members/{uuid}/points": {
+            "get": {
+                "tags": [
+                    "Points"
+                ],
+                "summary": "查詢會員點數",
+                "description": "取得會員當前點數餘額與交易明細（分頁）。需要 points.view 權限。",
+                "operationId": "getMemberPoints",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "會員 UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "頁碼",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "查詢成功",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "S200"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "member_uuid": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "balance": {
+                                                    "type": "integer",
+                                                    "example": 1250
+                                                },
+                                                "transactions": {
+                                                    "properties": {
+                                                        "data": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 42
+                                                                    },
+                                                                    "amount": {
+                                                                        "type": "integer",
+                                                                        "example": 100
+                                                                    },
+                                                                    "balance_after": {
+                                                                        "type": "integer",
+                                                                        "example": 1250
+                                                                    },
+                                                                    "type": {
+                                                                        "type": "string",
+                                                                        "example": "earn"
+                                                                    },
+                                                                    "reason": {
+                                                                        "type": "string",
+                                                                        "example": "訂單 #1024 完成"
+                                                                    },
+                                                                    "idempotency_key": {
+                                                                        "type": "string",
+                                                                        "example": "550e8400-..."
+                                                                    },
+                                                                    "actor": {
+                                                                        "properties": {
+                                                                            "id": {
+                                                                                "type": "integer",
+                                                                                "nullable": true
+                                                                            },
+                                                                            "type": {
+                                                                                "type": "string",
+                                                                                "example": "user"
+                                                                            },
+                                                                            "name": {
+                                                                                "type": "string",
+                                                                                "nullable": true
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "created_at": {
+                                                                        "type": "string",
+                                                                        "format": "date-time"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 42
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未認證"
+                    },
+                    "403": {
+                        "description": "權限不足（需要 points.view）"
+                    },
+                    "404": {
+                        "description": "會員不存在"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/members/{uuid}/points/adjust": {
+            "post": {
+                "tags": [
+                    "Points"
+                ],
+                "summary": "調整會員點數",
+                "description": "對會員點數進行增減（earn / spend / adjust / refund）。需要 points.manage 權限。必須帶 Idempotency-Key header 防止重複送出。",
+                "operationId": "adjustMemberPoints",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "description": "會員 UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "description": "UUID v4 冪等 key",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount",
+                                    "reason",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "description": "正數=加點 / 負數=扣點，不可為 0，絕對值 ≤ 1,000,000",
+                                        "type": "integer",
+                                        "example": 100
+                                    },
+                                    "reason": {
+                                        "description": "人類可讀說明，max 200",
+                                        "type": "string",
+                                        "example": "生日禮贈點"
+                                    },
+                                    "type": {
+                                        "description": "earn / spend / adjust / refund（expire 不開放 API）",
+                                        "type": "string",
+                                        "example": "earn"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "調整成功（或同 key 的 replay 回傳原結果）",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "code": {
+                                            "description": "replay 時為 B002",
+                                            "type": "string",
+                                            "example": "S200"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "transaction_id": {
+                                                    "type": "integer",
+                                                    "example": 42
+                                                },
+                                                "balance_before": {
+                                                    "type": "integer",
+                                                    "example": 1150
+                                                },
+                                                "balance_after": {
+                                                    "type": "integer",
+                                                    "example": 1250
+                                                },
+                                                "amount": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "replayed": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "未認證"
+                    },
+                    "403": {
+                        "description": "權限不足（需要 points.manage）"
+                    },
+                    "404": {
+                        "description": "會員不存在"
+                    },
+                    "422": {
+                        "description": "驗證失敗 / 點數不足（B001）/ 缺少 Idempotency-Key（V001）",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "B001"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Insufficient points balance"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/tags": {
             "get": {
                 "tags": [
@@ -2940,6 +3351,10 @@
         {
             "name": "Members",
             "description": "Members"
+        },
+        {
+            "name": "Points",
+            "description": "Points"
         },
         {
             "name": "Tags",
