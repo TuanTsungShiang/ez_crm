@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Auth\SendEmailOtpController;
 use App\Http\Controllers\Api\V1\Auth\SendPhoneOtpController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\V1\Auth\VerifyPhoneController;
+use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\GroupController;
 use App\Http\Controllers\Api\V1\Me\MeController;
 use App\Http\Controllers\Api\V1\Me\MePointsController;
@@ -80,6 +81,12 @@ Route::prefix('v1')
         // Points (admin)
         Route::get('members/{member:uuid}/points', [MemberPointsController::class, 'show']);
         Route::post('members/{member:uuid}/points/adjust', [MemberPointsController::class, 'adjust']);
+
+        // Coupons
+        Route::post('coupons', [CouponController::class, 'store']);
+        Route::post('coupons/{code}/verify', [CouponController::class, 'verify']);
+        Route::post('coupons/{code}/redeem', [CouponController::class, 'redeem']);
+        Route::post('coupons/{code}/cancel', [CouponController::class, 'cancel']);
 
         // Groups
         Route::apiResource('groups', GroupController::class);

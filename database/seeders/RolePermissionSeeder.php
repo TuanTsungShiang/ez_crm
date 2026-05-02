@@ -74,6 +74,9 @@ class RolePermissionSeeder extends Seeder
             'points.view',
             'points.manage',
 
+            'coupon.view',
+            'coupon.manage',
+
             'user.view_any',
             'user.manage',
 
@@ -105,6 +108,7 @@ class RolePermissionSeeder extends Seeder
                 'webhook_event.view_any',
                 'notification_delivery.view_any',
                 'points.view', 'points.manage',
+                'coupon.view', 'coupon.manage',
             ],
 
             'customer_support' => [
@@ -113,6 +117,7 @@ class RolePermissionSeeder extends Seeder
                 'member_group.view_any',
                 'tag.view_any',
                 'points.view',
+                'coupon.view',
             ],
 
             'marketing' => [
@@ -125,6 +130,7 @@ class RolePermissionSeeder extends Seeder
                 'webhook_event.view_any',
                 'notification_delivery.view_any',
                 'points.view', 'points.manage',
+                'coupon.view', 'coupon.manage',
             ],
 
             'viewer' => [
@@ -137,6 +143,7 @@ class RolePermissionSeeder extends Seeder
                 'webhook_event.view_any',
                 'notification_delivery.view_any',
                 'points.view',
+                'coupon.view',
             ],
         ];
     }
@@ -150,7 +157,7 @@ class RolePermissionSeeder extends Seeder
         $user = User::firstOrCreate(
             ['email' => 'admin@ezcrm.local'],
             [
-                'name'     => 'System Admin',
+                'name' => 'System Admin',
                 'password' => Hash::make('password'), // change after first login
             ]
         );
