@@ -662,6 +662,205 @@
                 }
             }
         },
+        "/coupons": {
+            "post": {
+                "tags": [
+                    "Coupons"
+                ],
+                "summary": "建立優惠券批次",
+                "description": "建立一個批次並自動產生指定數量的優惠券代碼。需要 coupon.manage 權限。",
+                "operationId": "createCouponBatch",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "type",
+                                    "value",
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "五一感謝券"
+                                    },
+                                    "type": {
+                                        "description": "discount_amount / discount_percent / points",
+                                        "type": "string",
+                                        "example": "discount_amount"
+                                    },
+                                    "value": {
+                                        "description": "NT元 / 折扣% / 點數",
+                                        "type": "integer",
+                                        "example": 100
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 500
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "expires_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "建立成功"
+                    },
+                    "403": {
+                        "description": "需要 coupon.manage 權限"
+                    },
+                    "422": {
+                        "description": "驗證失敗"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/coupons/{code}/verify": {
+            "post": {
+                "tags": [
+                    "Coupons"
+                ],
+                "summary": "驗證優惠券",
+                "description": "確認代碼是否有效（不改狀態）。需要 coupon.view 權限。",
+                "operationId": "verifyCoupon",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "EZCRM-A3F7-K9P2"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "有效"
+                    },
+                    "422": {
+                        "description": "C001 狀態不允許 / C002 已過期"
+                    },
+                    "404": {
+                        "description": "代碼不存在"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/coupons/{code}/redeem": {
+            "post": {
+                "tags": [
+                    "Coupons"
+                ],
+                "summary": "核銷優惠券",
+                "description": "原子性核銷（lockForUpdate 防併發重複核銷）。需要 coupon.manage 權限。",
+                "operationId": "redeemCoupon",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "member_uuid"
+                                ],
+                                "properties": {
+                                    "member_uuid": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "核銷成功"
+                    },
+                    "422": {
+                        "description": "C001 狀態不允許 / C002 已過期"
+                    },
+                    "404": {
+                        "description": "代碼不存在"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/coupons/{code}/cancel": {
+            "post": {
+                "tags": [
+                    "Coupons"
+                ],
+                "summary": "取消核銷",
+                "description": "將 redeemed 券退回 cancelled。points 類型自動退回點數。需要 coupon.manage 權限。",
+                "operationId": "cancelCoupon",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "取消成功"
+                    },
+                    "422": {
+                        "description": "C001 狀態不允許"
+                    },
+                    "404": {
+                        "description": "代碼不存在"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/groups": {
             "get": {
                 "tags": [
@@ -3339,6 +3538,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Coupons",
+            "description": "Coupons"
         },
         {
             "name": "Groups",
