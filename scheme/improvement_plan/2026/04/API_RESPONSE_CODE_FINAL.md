@@ -3,7 +3,7 @@
 > 版本：v1.0
 > 建立日期：2026-04-14
 > 來源：Kevin Legacy 版 + Claude 版合併
-> 狀態：待確認
+> 狀態：✅ 已實作於 `app/Enums/ApiCode.php`
 
 ---
 

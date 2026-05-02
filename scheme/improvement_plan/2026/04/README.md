@@ -33,6 +33,10 @@
 | [SESSION_LOG_2026_04_20.md](SESSION_LOG_2026_04_20.md) | Auth API Phase 0-3 + 5,`ez_crm_client` 前端初始化、vhost、Mailtrap |
 | [SESSION_LOG_2026_04_21.md](SESSION_LOG_2026_04_21.md) | Phase 4 OAuth 四 provider 全通、SPA popup、/me 頁 |
 | [SESSION_LOG_2026_04_22.md](SESSION_LOG_2026_04_22.md) | Webhook 系統上線(Phase 1+2)、4 個 event 類型、Filament 管理 |
+| [SESSION_LOG_2026_04_23.md](SESSION_LOG_2026_04_23.md) | Webhook 補事件(MemberUpdated / Deleted / OAuthUnbound)、T6 SNS 推進 |
+| [SESSION_LOG_2026_04_24.md](SESSION_LOG_2026_04_24.md) | Schedule assessment(behind analysis + 調整)、Phase 8 SMS skeleton |
+| [SESSION_LOG_2026_04_28.md](SESSION_LOG_2026_04_28.md) | RBAC 上線(spatie + policies)、Filament Nav reshuffle、T5.1 OAuth-only password |
+| [SESSION_LOG_2026_04_29.md](SESSION_LOG_2026_04_29.md) | PHPStan Larastan Level 5 baseline(63→10, -84%)、Phase 2.1 Day 1 Points schema + models |
 
 ### 🗺️ 長期路線圖(Roadmap)
 
@@ -44,14 +48,22 @@
 | [TOP_TIER_ROADMAP.md](TOP_TIER_ROADMAP.md) | 「頂標」視角,強調差異化賣點 |
 | [ENGINEERING_INFRASTRUCTURE_ROADMAP.md](ENGINEERING_INFRASTRUCTURE_ROADMAP.md) | 工程基礎建設(CI / Docker / 可觀測性 / 文件化),8 週 48 小時學習路徑 |
 
+**Roadmap 子計畫(drilldown)**:
+
+| 檔案 | 範疇 |
+|---|---|
+| [CI_CD_IMPROVEMENT_PLAN.md](CI_CD_IMPROVEMENT_PLAN.md) | CI/CD 子主題 checklist(57 → 80 分)— ENGINEERING_INFRA 的子題 |
+| [STATIC_ANALYSIS_PLAN.md](STATIC_ANALYSIS_PLAN.md) | PHPStan + ESLint 計畫,落地於 ADR-0003 與 Larastan Level 5 baseline |
+
 ### 🎯 整合計畫(Integration Plans)
 
 具體 Phase 的實作藍圖,含 schema / 架構決策 / 踩坑清單 / 估時。**接近開工時才讀對應計畫。**
 
 | 計畫 | Phase | 估時 | 狀態 |
 |---|---|---|---|
+| [POINTS_INTEGRATION_PLAN.md](POINTS_INTEGRATION_PLAN.md) | 2.1(點數)| - | 🟡 進行中(Day 1 schema + models 4/29)|
 | [ECPAY_INTEGRATION_PLAN.md](ECPAY_INTEGRATION_PLAN.md) | 7(金流)| 7 天 | 📋 計畫完成 |
-| [SMS_INTEGRATION_PLAN.md](SMS_INTEGRATION_PLAN.md) | 8(簡訊/三竹)| 4-7 天 | 📋 計畫完成 |
+| [SMS_INTEGRATION_PLAN.md](SMS_INTEGRATION_PLAN.md) | 8(簡訊/三竹)| 4-7 天 | 🟡 skeleton 已 commit(4/24),真實 driver 未接 |
 | `../../scim_2.0_reference/INTEGRATION_PLAN.md` | 9(SCIM 2.0)| 2.5 週 | 📋 計畫完成(跨資料夾) |
 | `../../../work_log/20260422/ez_crm_webhook_plan.md` | 完成後更新 v0.2 | (已實作)| ✅ 完成(跨資料夾)|
 
@@ -79,21 +91,25 @@
 
 ## 🎯 目前專案狀態對照
 
-截至 2026-04-22 收工:
+截至 2026-04-29 收工:
 
 ```
 Phase 0-3  ✅ Auth 基礎(註冊 / 驗證 / 登入 / 忘記密碼)
 Phase 4    ✅ OAuth × 4 provider(Google / GitHub / LINE / Discord)
-Phase 5    🟡 /me 系列 6/10(剩 profile update / email change / avatar)
-Phase 6    ⬜ SNS 綁定管理(4/23 明天計畫覆蓋)
+Phase 5    🟡 /me 系列 + T5.1 OAuth-only password set flow (4/28)
+Phase 6    🟡 SNS 綁定 events 已加(MemberUpdated / Deleted / OAuthUnbound, 4/23)
 Phase 7    📋 ECPay 金流(計畫完成,未實作)
-Phase 8    📋 SMS / 三竹(計畫完成,未實作)
+Phase 8    🟡 SMS skeleton 已 commit(4/24, SmsDriver + Log/Null + phone OTP),真實 driver 未接
 Phase 9    📋 SCIM 2.0(計畫完成,未實作,計畫在別的資料夾)
+Phase 2.1  🟡 Points integration Day 1 schema + models(4/29)
 ```
 
 **不在編號內但已做**:
 - Webhook 系統(4/22 發生),事件驅動架構,看 `work_log/20260422/ez_crm_webhook_plan.md` v0.2
 - `ez_crm_client` 前端 SPA(4/21 起),看 `scheme/frontend_client/plan.md`
+- **RBAC** 上線(4/28, commit 1e0fa69),spatie + policies + Filament canViewAny gating,WebhookHealthWidget 已 gate
+- **PHPStan Larastan Level 5 baseline**(4/29, 63 → 10 errors, -84%),剩餘 10 個是第三方型別契約缺陷(Socialite / Sanctum / HasAbilities),非用戶程式碼債
+- **PHPUnit GitHub Actions CI**(4/28),pr-review.yml 已關待 OPENAI_API_KEY
 
 ---
 
