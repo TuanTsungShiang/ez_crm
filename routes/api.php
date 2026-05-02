@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\Me\MePointsController;
 use App\Http\Controllers\Api\V1\MemberController;
 use App\Http\Controllers\Api\V1\MemberPointsController;
 use App\Http\Controllers\Api\V1\TagController;
+use App\Http\Controllers\Api\V1\Webhooks\EcpayWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -67,6 +68,13 @@ Route::prefix('v1/me')
 
         // Points
         Route::get('points', [MePointsController::class, 'show']);
+    });
+
+// Payment provider webhooks — no auth, protected by IP whitelist + signature verify
+Route::prefix('v1/webhooks')
+    ->middleware('ecpay.ip')
+    ->group(function () {
+        Route::post('ecpay/payment', [EcpayWebhookController::class, 'payment']);
     });
 
 Route::prefix('v1')
