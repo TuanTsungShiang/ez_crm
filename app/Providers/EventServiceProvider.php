@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Events\Webhooks\CouponRedeemed;
 use App\Events\Webhooks\MemberCreated;
 use App\Events\Webhooks\MemberDeleted;
 use App\Events\Webhooks\MemberLoggedIn;
@@ -14,9 +15,9 @@ use App\Listeners\DispatchWebhook;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use SocialiteProviders\Manager\SocialiteWasCalled;
-use SocialiteProviders\Line\LineExtendSocialite;
 use SocialiteProviders\Discord\DiscordExtendSocialite;
+use SocialiteProviders\Line\LineExtendSocialite;
+use SocialiteProviders\Manager\SocialiteWasCalled;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -35,14 +36,15 @@ class EventServiceProvider extends ServiceProvider
         ],
 
         // Webhook events — 共用同一個 DispatchWebhook listener
-        MemberCreated::class       => [DispatchWebhook::class],
-        MemberUpdated::class       => [DispatchWebhook::class],
-        MemberDeleted::class       => [DispatchWebhook::class],
+        MemberCreated::class => [DispatchWebhook::class],
+        MemberUpdated::class => [DispatchWebhook::class],
+        MemberDeleted::class => [DispatchWebhook::class],
         MemberVerifiedEmail::class => [DispatchWebhook::class],
-        MemberLoggedIn::class      => [DispatchWebhook::class],
-        OAuthBound::class          => [DispatchWebhook::class],
-        OAuthUnbound::class        => [DispatchWebhook::class],
-        PointAdjusted::class       => [DispatchWebhook::class],
+        MemberLoggedIn::class => [DispatchWebhook::class],
+        OAuthBound::class => [DispatchWebhook::class],
+        OAuthUnbound::class => [DispatchWebhook::class],
+        PointAdjusted::class => [DispatchWebhook::class],
+        CouponRedeemed::class => [DispatchWebhook::class],
     ];
 
     /**
