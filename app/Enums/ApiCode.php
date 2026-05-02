@@ -68,6 +68,19 @@ class ApiCode
 
     const COUPON_NOT_FOR_MEMBER = 'C003';
 
+    // D — 訂單 / 金流類
+    const INVALID_ORDER_STATE_TRANSITION = 'D001';
+
+    const ORDER_NOT_REFUNDABLE = 'D002';
+
+    const PAYMENT_SIGNATURE_INVALID = 'D003';
+
+    const REFUND_AMOUNT_EXCEEDS_PAID = 'D004';
+
+    const PAYMENT_CALLBACK_DUPLICATE = 'D005';
+
+    const ORDER_BELOW_MIN_CHARGE = 'D006';
+
     // I — 內部錯誤類
     const UNKNOWN_ERROR = 'I000';
 
