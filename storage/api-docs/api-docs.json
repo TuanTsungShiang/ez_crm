@@ -15,6 +15,347 @@
         }
     ],
     "paths": {
+        "/admin/orders": {
+            "get": {
+                "tags": [
+                    "Admin - Orders"
+                ],
+                "summary": "訂單列表（支援多欄 filter）",
+                "operationId": "adminListOrders",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "member_uuid",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "分頁訂單列表"
+                    },
+                    "403": {
+                        "description": "需要 order.view_any 權限"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Orders"
+                ],
+                "summary": "代下單",
+                "description": "為指定會員代下單。mark_as_paid_offline=true 直接標記付款，略過 ECPay 流程。",
+                "operationId": "adminCreateOrder",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "member_uuid",
+                                    "items",
+                                    "shipping_address"
+                                ],
+                                "properties": {
+                                    "member_uuid": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "mark_as_paid_offline": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "訂單建立成功"
+                    },
+                    "403": {
+                        "description": "需要 order.create 權限"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/orders/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Orders"
+                ],
+                "summary": "訂單詳情",
+                "operationId": "adminShowOrder",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "訂單詳情"
+                    },
+                    "403": {
+                        "description": "需要 order.view 權限"
+                    },
+                    "404": {
+                        "description": "不存在"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/orders/{id}/ship": {
+            "post": {
+                "tags": [
+                    "Admin - Orders"
+                ],
+                "summary": "出貨（paid → shipped）",
+                "operationId": "adminShipOrder",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "已出貨"
+                    },
+                    "422": {
+                        "description": "D001 狀態不允許"
+                    },
+                    "403": {
+                        "description": "需要 order.update 權限"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/orders/{id}/complete": {
+            "post": {
+                "tags": [
+                    "Admin - Orders"
+                ],
+                "summary": "完成訂單（shipped/paid → completed，觸發加點）",
+                "operationId": "adminCompleteOrder",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "已完成，points_earned 已寫入"
+                    },
+                    "422": {
+                        "description": "D001 狀態不允許"
+                    },
+                    "403": {
+                        "description": "需要 order.update 權限"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/orders/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Admin - Orders"
+                ],
+                "summary": "取消訂單（T2/T4/T7）",
+                "operationId": "adminCancelOrder",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "客服協助取消"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "已取消"
+                    },
+                    "422": {
+                        "description": "D001 狀態不允許"
+                    },
+                    "403": {
+                        "description": "需要 order.cancel 權限"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/orders/{id}/refund": {
+            "post": {
+                "tags": [
+                    "Admin - Orders"
+                ],
+                "summary": "退款（全額或部分）",
+                "description": "反向 Points 比例退。需要 order.refund 權限（限 admin+）。",
+                "operationId": "adminRefundOrder",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "integer",
+                                        "example": 500
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "客服補償"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "退款完成"
+                    },
+                    "422": {
+                        "description": "D001 狀態不允許 / D004 超額"
+                    },
+                    "403": {
+                        "description": "需要 order.refund 權限"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/auth/password/forgot": {
             "post": {
                 "tags": [
@@ -3871,13 +4212,23 @@
         "securitySchemes": {
             "sanctum": {
                 "type": "http",
-                "description": "使用 Laravel Sanctum Bearer Token 進行認證",
+                "description": "Admin / User Bearer Token（auth:sanctum）",
+                "bearerFormat": "Token",
+                "scheme": "bearer"
+            },
+            "memberAuth": {
+                "type": "http",
+                "description": "Member Bearer Token（auth:member）— 前台會員登入後取得",
                 "bearerFormat": "Token",
                 "scheme": "bearer"
             }
         }
     },
     "tags": [
+        {
+            "name": "Admin - Orders",
+            "description": "Admin - Orders"
+        },
         {
             "name": "Auth",
             "description": "Auth"
