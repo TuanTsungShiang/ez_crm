@@ -77,6 +77,13 @@ class RolePermissionSeeder extends Seeder
             'coupon.view',
             'coupon.manage',
 
+            'order.view_any',
+            'order.view',
+            'order.create',
+            'order.update',
+            'order.cancel',
+            'order.refund',
+
             'user.view_any',
             'user.manage',
 
@@ -109,6 +116,7 @@ class RolePermissionSeeder extends Seeder
                 'notification_delivery.view_any',
                 'points.view', 'points.manage',
                 'coupon.view', 'coupon.manage',
+                'order.view_any', 'order.view', 'order.create', 'order.update', 'order.cancel', 'order.refund',
             ],
 
             'customer_support' => [
@@ -118,6 +126,7 @@ class RolePermissionSeeder extends Seeder
                 'tag.view_any',
                 'points.view',
                 'coupon.view',
+                'order.view_any', 'order.view', 'order.cancel',
             ],
 
             'marketing' => [
@@ -131,6 +140,7 @@ class RolePermissionSeeder extends Seeder
                 'notification_delivery.view_any',
                 'points.view', 'points.manage',
                 'coupon.view', 'coupon.manage',
+                'order.view_any', 'order.view',
             ],
 
             'viewer' => [
@@ -144,6 +154,7 @@ class RolePermissionSeeder extends Seeder
                 'notification_delivery.view_any',
                 'points.view',
                 'coupon.view',
+                'order.view_any', 'order.view',
             ],
         ];
     }

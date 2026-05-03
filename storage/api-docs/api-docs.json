@@ -1668,6 +1668,263 @@
                 ]
             }
         },
+        "/me/orders": {
+            "get": {
+                "tags": [
+                    "Me - Orders"
+                ],
+                "summary": "查自己的訂單列表",
+                "operationId": "memberListOrders",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "分頁訂單列表"
+                    },
+                    "401": {
+                        "description": "未登入"
+                    }
+                },
+                "security": [
+                    {
+                        "memberAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Me - Orders"
+                ],
+                "summary": "下單",
+                "description": "建立訂單並取得 ECPay 付款表單。需要 Idempotency-Key header（UUID v4）。",
+                "operationId": "memberCreateOrder",
+                "parameters": [
+                    {
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440000"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items",
+                                    "shipping_address"
+                                ],
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_sku",
+                                                "product_name",
+                                                "unit_price",
+                                                "quantity"
+                                            ],
+                                            "properties": {
+                                                "product_sku": {
+                                                    "type": "string",
+                                                    "example": "SKU-001"
+                                                },
+                                                "product_name": {
+                                                    "type": "string",
+                                                    "example": "商品 A"
+                                                },
+                                                "unit_price": {
+                                                    "type": "integer",
+                                                    "example": 1000
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "shipping_address": {
+                                        "properties": {
+                                            "recipient_name": {
+                                                "type": "string",
+                                                "example": "王小明"
+                                            },
+                                            "phone": {
+                                                "type": "string",
+                                                "example": "0912345678"
+                                            },
+                                            "postal_code": {
+                                                "type": "string",
+                                                "example": "100"
+                                            },
+                                            "city": {
+                                                "type": "string",
+                                                "example": "台北市"
+                                            },
+                                            "district": {
+                                                "type": "string",
+                                                "example": "中正區"
+                                            },
+                                            "address_line": {
+                                                "type": "string",
+                                                "example": "測試路 1 號"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "coupon_codes": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "訂單建立成功，含 ECPay form HTML"
+                    },
+                    "422": {
+                        "description": "V001 缺欄 / C001 券狀態無效 / C002 券過期 / D006 低於最低金額"
+                    },
+                    "401": {
+                        "description": "未登入"
+                    }
+                },
+                "security": [
+                    {
+                        "memberAuth": []
+                    }
+                ]
+            }
+        },
+        "/me/orders/{order_no}": {
+            "get": {
+                "tags": [
+                    "Me - Orders"
+                ],
+                "summary": "查單筆訂單詳情",
+                "operationId": "memberShowOrder",
+                "parameters": [
+                    {
+                        "name": "order_no",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "EZ-20260502-0001"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "訂單詳情"
+                    },
+                    "404": {
+                        "description": "訂單不存在或不屬於此會員"
+                    }
+                },
+                "security": [
+                    {
+                        "memberAuth": []
+                    }
+                ]
+            }
+        },
+        "/me/orders/{order_no}/repay": {
+            "post": {
+                "tags": [
+                    "Me - Orders"
+                ],
+                "summary": "重付（重新取得 ECPay 付款表單）",
+                "description": "只允許 pending 狀態的訂單重新取得付款表單。",
+                "operationId": "memberRepayOrder",
+                "parameters": [
+                    {
+                        "name": "order_no",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "EZ-20260502-0001"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ECPay form HTML"
+                    },
+                    "422": {
+                        "description": "D001 訂單狀態不允許重付"
+                    },
+                    "404": {
+                        "description": "訂單不存在"
+                    }
+                },
+                "security": [
+                    {
+                        "memberAuth": []
+                    }
+                ]
+            }
+        },
+        "/me/orders/{order_no}/cancel": {
+            "post": {
+                "tags": [
+                    "Me - Orders"
+                ],
+                "summary": "取消訂單",
+                "description": "只允許 pending 狀態。paid / shipped 取消需走 Admin API。",
+                "operationId": "memberCancelOrder",
+                "parameters": [
+                    {
+                        "name": "order_no",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "EZ-20260502-0001"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "訂單已取消"
+                    },
+                    "422": {
+                        "description": "D001 訂單狀態不允許取消"
+                    },
+                    "404": {
+                        "description": "訂單不存在"
+                    }
+                },
+                "security": [
+                    {
+                        "memberAuth": []
+                    }
+                ]
+            }
+        },
         "/me/points": {
             "get": {
                 "tags": [
@@ -3522,6 +3779,92 @@
                     }
                 ]
             }
+        },
+        "/webhooks/ecpay/payment": {
+            "post": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "ECPay 付款結果通知 (Server-to-Server)",
+                "description": "ECPay 付款完成後 POST 至此端點。三層防護：IP 白名單 (prod) + CheckMacValue 驗簽 + 重放防禦。永遠回傳 200 1|OK 避免 ECPay 重試。",
+                "operationId": "ecpayPaymentWebhook",
+                "requestBody": {
+                    "description": "ECPay AIO 付款通知參數（application/x-www-form-urlencoded）",
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "required": [
+                                    "MerchantID",
+                                    "MerchantTradeNo",
+                                    "TradeNo",
+                                    "RtnCode",
+                                    "RtnMsg",
+                                    "TradeAmt",
+                                    "PaymentDate",
+                                    "CheckMacValue"
+                                ],
+                                "properties": {
+                                    "MerchantID": {
+                                        "type": "string",
+                                        "example": "2000132"
+                                    },
+                                    "MerchantTradeNo": {
+                                        "type": "string",
+                                        "example": "EZ-20260502-0001"
+                                    },
+                                    "TradeNo": {
+                                        "type": "string",
+                                        "example": "2026050204396522"
+                                    },
+                                    "RtnCode": {
+                                        "description": "1=成功",
+                                        "type": "string",
+                                        "example": "1"
+                                    },
+                                    "RtnMsg": {
+                                        "type": "string",
+                                        "example": "交易成功"
+                                    },
+                                    "TradeAmt": {
+                                        "type": "integer",
+                                        "example": 2000
+                                    },
+                                    "PaymentDate": {
+                                        "type": "string",
+                                        "example": "2026/05/02 14:39:55"
+                                    },
+                                    "PaymentType": {
+                                        "type": "string",
+                                        "example": "Credit_CreditCard"
+                                    },
+                                    "CheckMacValue": {
+                                        "type": "string",
+                                        "example": "A3F9..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "已收到（1|OK）",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "example": "1|OK"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "IP 不在白名單（僅 production 環境）"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -3552,6 +3895,10 @@
             "description": "Me"
         },
         {
+            "name": "Me - Orders",
+            "description": "Me - Orders"
+        },
+        {
             "name": "Members",
             "description": "Members"
         },
@@ -3562,6 +3909,10 @@
         {
             "name": "Tags",
             "description": "Tags"
+        },
+        {
+            "name": "Webhooks",
+            "description": "Webhooks"
         }
     ]
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AdminOrderController;
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\OAuthController;
@@ -109,4 +110,15 @@ Route::prefix('v1')
 
         // Tags
         Route::apiResource('tags', TagController::class);
+
+        // Admin Orders
+        Route::prefix('admin/orders')->group(function () {
+            Route::get('/', [AdminOrderController::class, 'index']);
+            Route::post('/', [AdminOrderController::class, 'store']);
+            Route::get('{order}', [AdminOrderController::class, 'show']);
+            Route::post('{order}/ship', [AdminOrderController::class, 'ship']);
+            Route::post('{order}/complete', [AdminOrderController::class, 'complete']);
+            Route::post('{order}/cancel', [AdminOrderController::class, 'cancel']);
+            Route::post('{order}/refund', [AdminOrderController::class, 'refund']);
+        });
     });
