@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Auth\VerifyPhoneController;
 use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\GroupController;
 use App\Http\Controllers\Api\V1\Me\MeController;
+use App\Http\Controllers\Api\V1\Me\MeOrderController;
 use App\Http\Controllers\Api\V1\Me\MePointsController;
 use App\Http\Controllers\Api\V1\MemberController;
 use App\Http\Controllers\Api\V1\MemberPointsController;
@@ -68,6 +69,13 @@ Route::prefix('v1/me')
 
         // Points
         Route::get('points', [MePointsController::class, 'show']);
+
+        // Orders
+        Route::post('orders', [MeOrderController::class, 'store']);
+        Route::get('orders', [MeOrderController::class, 'index']);
+        Route::get('orders/{order_no}', [MeOrderController::class, 'show']);
+        Route::post('orders/{order_no}/repay', [MeOrderController::class, 'repay']);
+        Route::post('orders/{order_no}/cancel', [MeOrderController::class, 'cancel']);
     });
 
 // Payment provider webhooks — no auth, protected by IP whitelist + signature verify
