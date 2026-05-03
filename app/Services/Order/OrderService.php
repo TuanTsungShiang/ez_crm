@@ -2,6 +2,12 @@
 
 namespace App\Services\Order;
 
+use App\Events\Webhooks\OrderCancelled;
+use App\Events\Webhooks\OrderCompleted;
+use App\Events\Webhooks\OrderCreated;
+use App\Events\Webhooks\OrderPaid;
+use App\Events\Webhooks\OrderRefunded;
+use App\Events\Webhooks\OrderShipped;
 use App\Exceptions\Coupon\CouponExpiredException;
 use App\Exceptions\Coupon\InvalidCouponStateException;
 use App\Exceptions\Order\InvalidOrderStateTransitionException;
@@ -162,7 +168,10 @@ class OrderService
             // Record initial status history (null → pending)
             $this->recordTransition($order, null, Order::STATUS_PENDING, null);
 
-            return $order->load(['items', 'addresses', 'coupons']);
+            $loaded = $order->load(['items', 'addresses', 'coupons', 'member']);
+            event(new OrderCreated($loaded));
+
+            return $loaded;
         });
     }
 
@@ -284,7 +293,10 @@ class OrderService
 
             $this->recordTransition($locked, Order::STATUS_PENDING, Order::STATUS_PAID, null);
 
-            return $locked->fresh();
+            $fresh = $locked->fresh(['member']);
+            event(new OrderPaid($fresh));
+
+            return $fresh;
         });
     }
 
@@ -307,7 +319,10 @@ class OrderService
 
             $this->recordTransition($locked, Order::STATUS_PAID, Order::STATUS_SHIPPED, $actor);
 
-            return $locked->fresh();
+            $fresh = $locked->fresh(['member']);
+            event(new OrderShipped($fresh));
+
+            return $fresh;
         });
     }
 
@@ -347,7 +362,10 @@ class OrderService
 
             $this->recordTransition($locked, $fromStatus, Order::STATUS_COMPLETED, $actor);
 
-            return $locked->fresh();
+            $fresh = $locked->fresh(['member']);
+            event(new OrderCompleted($fresh));
+
+            return $fresh;
         });
     }
 
@@ -392,7 +410,10 @@ class OrderService
                 $reason ?: null
             );
 
-            return $locked->fresh();
+            $fresh = $locked->fresh(['member']);
+            event(new OrderCancelled($fresh, $reason ?: null));
+
+            return $fresh;
         });
     }
 
@@ -453,6 +474,10 @@ class OrderService
             ]);
 
             $this->recordTransition($locked, $prevStatus, $newStatus, $admin, $reason);
+
+            $locked->refresh();
+            $locked->loadMissing('member');
+            event(new OrderRefunded($locked, $refund));
 
             return $refund;
         });

@@ -10,6 +10,12 @@ use App\Events\Webhooks\MemberUpdated;
 use App\Events\Webhooks\MemberVerifiedEmail;
 use App\Events\Webhooks\OAuthBound;
 use App\Events\Webhooks\OAuthUnbound;
+use App\Events\Webhooks\OrderCancelled;
+use App\Events\Webhooks\OrderCompleted;
+use App\Events\Webhooks\OrderCreated;
+use App\Events\Webhooks\OrderPaid;
+use App\Events\Webhooks\OrderRefunded;
+use App\Events\Webhooks\OrderShipped;
 use App\Events\Webhooks\PointAdjusted;
 use App\Listeners\DispatchWebhook;
 use Illuminate\Auth\Events\Registered;
@@ -45,6 +51,14 @@ class EventServiceProvider extends ServiceProvider
         OAuthUnbound::class => [DispatchWebhook::class],
         PointAdjusted::class => [DispatchWebhook::class],
         CouponRedeemed::class => [DispatchWebhook::class],
+
+        // Order lifecycle events
+        OrderCreated::class => [DispatchWebhook::class],
+        OrderPaid::class => [DispatchWebhook::class],
+        OrderShipped::class => [DispatchWebhook::class],
+        OrderCompleted::class => [DispatchWebhook::class],
+        OrderCancelled::class => [DispatchWebhook::class],
+        OrderRefunded::class => [DispatchWebhook::class],
     ];
 
     /**

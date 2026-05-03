@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Jobs\CancelPendingOrdersJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -12,7 +13,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Cancel orders that have been pending for too long (configurable via order_settings)
+        $schedule->job(CancelPendingOrdersJob::class)->everyFiveMinutes();
     }
 
     /**
